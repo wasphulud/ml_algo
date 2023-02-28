@@ -30,20 +30,38 @@ logging.basicConfig(
 
 
 def compute_entropy_column(column: pd.Series) -> float:
-    """This function returns the entropy of a pandas series"""
+    """This function returns the entropy of a pandas series
+
+    Args:
+        column: The target column.
+    Returns:
+        float: The entropy of the column.
+    """
+
     prob = column.value_counts(normalize=True)  # get the probability of each value
     return -sum(prob * np.log2(prob))
 
 
 def compute_entropy(dataframe: pd.DataFrame) -> pd.Series:
+    """This function computes the entropy of each column in a dataframe
+    
+    Args:
+        dataframe: The dataframe to compute the entropy.
+    Returns:
+        pd.Series: The entropy of each column in the dataframe.
     """
-    The entropy function return the entropy of each column in a dataframe"""
+
     return dataframe.apply(compute_entropy_column, axis=1)
 
 
 def compute_variance(dataframe: pd.DataFrame) -> pd.Series:
+    """This function returns the variance of each column in a dataframe
+    
+    Args:
+        dataframe: The dataframe to compute the variance.
+    Returns:
+        pd.Series: The variance of each column in the dataframe.
     """
-    The variance function return the variance of each column in a dataframe"""
 
     if len(dataframe) == 1:
         return 0
@@ -59,6 +77,13 @@ def compute_information_gain(
     
     The function computes the information gain of spliting a parent node to two
     children leaves based on a binary mask (defined by the original feature column)
+
+    Args:
+        column: The target column, values of the parent node.
+        mask: A binary mask defined by the original feature column.
+    Returns:
+        float: The information gain of the split.
+    
     """
 
     if mask.shape[0] == 0:
