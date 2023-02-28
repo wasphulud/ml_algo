@@ -21,13 +21,6 @@ import logging
 import pandas as pd
 import numpy as np
 
-LOGGING_LEVEL = logging.DEBUG
-logging.basicConfig(
-    level=LOGGING_LEVEL,
-    format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-
 
 def compute_entropy_column(column: pd.Series) -> float:
     """This function returns the entropy of a pandas series
@@ -38,13 +31,14 @@ def compute_entropy_column(column: pd.Series) -> float:
         float: The entropy of the column.
     """
 
-    prob = column.value_counts(normalize=True)  # get the probability of each value
+    # get the probability of each value
+    prob = column.value_counts(normalize=True)
     return -sum(prob * np.log2(prob))
 
 
 def compute_entropy(dataframe: pd.DataFrame) -> pd.Series:
     """This function computes the entropy of each column in a dataframe
-    
+
     Args:
         dataframe: The dataframe to compute the entropy.
     Returns:
@@ -56,7 +50,7 @@ def compute_entropy(dataframe: pd.DataFrame) -> pd.Series:
 
 def compute_variance(dataframe: pd.DataFrame) -> pd.Series:
     """This function returns the variance of each column in a dataframe
-    
+
     Args:
         dataframe: The dataframe to compute the variance.
     Returns:
@@ -72,9 +66,10 @@ def compute_variance(dataframe: pd.DataFrame) -> pd.Series:
 
 
 def compute_information_gain(
-    column: pd.Series, mask: pd.Series, verbose: bool = False) -> float:
-    """ This function returns the information gain of a pandas serie.
-    
+    column: pd.Series, mask: pd.Series, verbose: bool = False
+) -> float:
+    """This function returns the information gain of a pandas serie.
+
     The function computes the information gain of spliting a parent node to two
     children leaves based on a binary mask (defined by the original feature column)
 
@@ -83,7 +78,7 @@ def compute_information_gain(
         mask: A binary mask defined by the original feature column.
     Returns:
         float: The information gain of the split.
-    
+
     """
 
     if mask.shape[0] == 0:
@@ -103,6 +98,7 @@ def compute_information_gain(
         if verbose:
             logging.debug("The target column is numerical")
         info_gain = compute_variance(column) - (
-            positives * compute_variance(column[mask]) + negatives * compute_variance(column[~mask])
+            positives * compute_variance(column[mask])
+            + negatives * compute_variance(column[~mask])
         )
     return info_gain

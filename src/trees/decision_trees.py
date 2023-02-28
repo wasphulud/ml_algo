@@ -39,7 +39,7 @@ TODO:
     * implement cross validation ?
     * Add the Gini Index
     * Add the CART algorithm
-    * Add the pruning algorithm ?? 
+    * Add the pruning algorithm ??
     * Add the random forest algorithm
     * Add the gradient boosting algorithm ??
     * Add the XGBoost algorithm
@@ -58,7 +58,7 @@ import math
 import pandas as pd
 import numpy as np
 
-from purity_measurements import compute_information_gain
+from trees.purity_measurements import compute_information_gain
 
 LOGGING_LEVEL = logging.DEBUG
 logging.basicConfig(
@@ -67,8 +67,9 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
+
 class DecisionTree:
-    """ This class implements the decision tree algorithm for Classification
+    """This class implements the decision tree algorithm for Classification
     and Regression.
 
     This class allows to initiale and train a tree based on the decision tree
@@ -104,7 +105,7 @@ class DecisionTree:
         mode: str = "classification",
         verbose: bool = False,
     ):
-        self.tree: dict[str, dict] = dict()
+        self.tree: dict[str, dict] = {}
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_information_gain = min_information_gain
@@ -112,10 +113,8 @@ class DecisionTree:
         self.verbose = verbose
         self.target = ""
 
-
-
     def _init_target(self, target: str) -> None:
-        """ This private method initializes the target feature
+        """This private method initializes the target feature
 
         Args:
             target (str): target's feature name
@@ -124,17 +123,34 @@ class DecisionTree:
         self.target = target
 
     def _cast_target(self, dataframe) -> None:
-        """ This private method casts the target feature to a categorical type
+        """This private method casts the target feature to the relevant type.
+
+        If the mode is classification, the target is casted to object.
+        If the mode is regression, the target is casted to float.
+        The method DOES NOT raise an error if the mode is not recognized. please
+        check _compute_leaf_value.
 
         Args:
             dataframe (pd.DataFrame): training dataset
         """
-
-        dataframe[self.target] = dataframe[self.target].astype("object")
-
+        target_type = dataframe[self.target].dtype
+        if self.mode == "classification":
+            if target_type != "object":
+                logging.warning(
+                    "target column is not of type object and is %s ---> casting to object",
+                    target_type,
+                )
+            dataframe[self.target] = dataframe[self.target].astype("object")
+            return
+        if target_type == "object":
+            logging.warning(
+                "target column is type object and is where it shoult\
+                    be float/float32/float64 ---> casting to float32"
+            )
+        dataframe[self.target] = dataframe[self.target].astype("float32")
 
     def train(self, dataframe: pd.DataFrame, target: str) -> dict:
-        """ This method trains the decision tree using the input dataframe.
+        """This method trains the decision tree using the input dataframe.
 
         Args:
             dataframe (pd.DataFrame): training dataset
@@ -241,22 +257,20 @@ class DecisionTree:
             logging.debug(" --> Best split: %s", split_variable)
             logging.debug(" --> Best split value: %s", split_value)
             logging.debug(" --> Best split info gain: %s", split_info_gain)
-            logging.debug(" --> Best split is categorical: %s",
-                          split_is_categorical)
+            logging.debug(" --> Best split is categorical: %s", split_is_categorical)
 
         # split the dataframe using the variable and its value to two children
-        left_data, right_data = split_data_node(
-            dataframe, split_variable, split_value)
+        left_data, right_data = split_data_node(dataframe, split_variable, split_value)
 
         # compute the two children subtrees recursively
         left_response = self._build_tree(left_data, max_depth - 1)
         right_response = self._build_tree(right_data, max_depth - 1)
 
-        # if both children have the same outcome then the current node is a leaf
+        # if both children have the same outcome then the current node is a
+        # leaf
         if left_response == right_response:
             if self.verbose:
-                logging.debug(
-                    " [OUT] --> Left and right responses are the same")
+                logging.debug(" [OUT] --> Left and right responses are the same")
             return left_response
 
         # The final decision tree
@@ -271,7 +285,7 @@ class DecisionTree:
         return decision_tree
 
     def _compute_leaf_value(self, serie: pd.Series) -> dict:
-        """ This function returns the prediction for a given serie
+        """This function returns the prediction for a given serie
 
         Args:
             serie (pd.Series): The values from which to compute the node's value.
@@ -289,11 +303,10 @@ class DecisionTree:
             return {"is_leaf": serie.value_counts().idxmax()}
         if self.mode == "regression":
             return {"is_leaf": serie.mean()}
-        raise ValueError(
-            "The mode must be either classification or regression")
+        raise ValueError("The mode must be either classification or regression")
 
     def _infer_one_entry(self, sample: pd.Series, decision_tree: dict) -> str:
-        """ This function returns the prediction for a given sample
+        """This function returns the prediction for a given sample
 
         Args:
             sample (pd.Series): The sample for which the user wants to predict the value.
@@ -319,13 +332,14 @@ class DecisionTree:
             if sample[split_variable] in split_value:
                 return self._infer_one_entry(sample, decision_tree["left"])
             return self._infer_one_entry(sample, decision_tree["right"])
-        split_value = split_value[0] # remove the brackets and access the value
+        # remove the brackets and access the value
+        split_value = split_value[0]
         if sample[split_variable] < split_value:
             return self._infer_one_entry(sample, decision_tree["left"])
         return self._infer_one_entry(sample, decision_tree["right"])
 
     def infer_sample(self, dataframe: pd.DataFrame) -> pd.Series:
-        """ This function returns the prediction for a given dataframe
+        """This function returns the prediction for a given dataframe
 
         Args:
             dataframe (pd.DataFrame): the dataframe for which the user wants
@@ -341,7 +355,7 @@ class DecisionTree:
 def split_data_node(
     dataframe: pd.DataFrame, split_variable: str, split_value
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """ This function returns the split dataframe based on a variable
+    """This function returns the split dataframe based on a variable
 
     Args:
         dataframe (pd.DataFrame): dataset we want to split
@@ -365,7 +379,7 @@ def split_data_node(
 def get_best_split(
     dataframe: pd.DataFrame, target_name: str, verbose: bool = False
 ) -> tuple[str, str, float, bool]:
-    """ This function returns the best split for a given dataframe.
+    """This function returns the best split for a given dataframe.
 
     Given a dataset and the target feature name, we compute all the possible
     splits and measure the information gain for each split. The split with the
@@ -404,7 +418,7 @@ def get_best_split(
 def get_best_split_feature(
     feature: pd.Series, target: pd.Series, verbose: bool = False
 ) -> tuple[list, float, bool, bool]:
-    """ This function returns the best split for a given feature
+    """This function returns the best split for a given feature
 
     Args:
         feature (pd.Series): the feature to compute the best split for.
@@ -442,7 +456,7 @@ def get_best_split_feature(
     if len(info_gain) == 0:
         if verbose:
             logging.debug(" --> No information gain")
-        return [""], -math.inf, is_cat,False
+        return [""], -math.inf, is_cat, False
 
     best_split_info_gain = max(info_gain)
     best_split_value = split_value[info_gain.index(best_split_info_gain)]
@@ -456,7 +470,7 @@ def get_best_split_feature(
 
 
 def get_categorical_combinations(feature: pd.Series) -> list[list]:
-    """ This function returns the possible combinations of a categorical variable
+    """This function returns the possible combinations of a categorical variable
 
     The function will return all the possible combinations except the empty
     and the full subsets.
@@ -475,37 +489,3 @@ def get_categorical_combinations(feature: pd.Series) -> list[list]:
         for subset in itertools.combinations(feature, length):
             options.append(list(subset))
     return options[1:-1]  # remove the empty list and the full list
-
-
-def dirty_excecution():
-    from pprint import pprint
-
-    data = pd.read_csv("../../../data/data.csv")
-    data["obese"] = (data.Index >= 4).astype("object")
-    data.drop("Index", axis=1, inplace=True)
-    # data['bmi'] = data['Weight'] / (data['Height'] ) ** 2
-    # print(data.shape)
-    d_tree = DecisionTree(max_depth=1000, min_samples_split=2, verbose=True)
-    training = data.sample(frac=0.8)
-    d_tree.train(training, "obese")
-    pprint(d_tree.tree)
-    print(pd.concat([d_tree.infer_sample(data.drop(training.index)), data.drop(training.index)["obese"]], axis=1))
-    print(sum(d_tree.infer_sample(data.drop(training.index)) == data.drop(training.index)["obese"]) / data.drop(training.index).shape[0])
-
-    print("########### TITANIC NOW")
-    titanic = pd.read_csv("../../../data/titanic.csv")
-
-    titanic_lite = titanic.loc[:, ["Embarked", "Age", "Fare", "Survived"]]
-    titanic_lite = titanic_lite.loc[titanic_lite.isna().sum(axis=1) == 0, :]
-    training = titanic_lite.sample(frac=0.8)
-
-    d_tree_titanic = DecisionTree(max_depth=5, min_samples_split=2, verbose=False)
-    d_tree_titanic.train(training, "Survived")
-    #pprint(d_tree_titanic.tree)
-    # print(d_tree_titanic.infer_sample(titanic_lite.iloc[500:]))
-    print(pd.concat([d_tree_titanic.infer_sample(titanic_lite.drop(training.index)), titanic_lite.drop(training.index)["Survived"]], axis=1))
-    print(sum(d_tree_titanic.infer_sample(titanic_lite.drop(training.index)) == titanic_lite.drop(training.index)["Survived"]) / titanic_lite.drop(training.index).shape[0])
-    
-
-
-dirty_excecution()
