@@ -17,9 +17,9 @@ import sys
 import logging
 import pandas as pd
 
-from cli import parse_args
-from decision_trees import DecisionTree
-from read_files import (
+from trees.cli import parse_args
+from trees.decision_trees import DecisionTree
+from trees.read_files import (
     read_csv,
     preprocess_bmi_dataset,
     preprocess_titanic_dataset,

@@ -58,7 +58,7 @@ import math
 import pandas as pd
 import numpy as np
 
-from purity_measurements import compute_information_gain
+from trees.purity_measurements import compute_information_gain
 
 LOGGING_LEVEL = logging.DEBUG
 logging.basicConfig(
