@@ -41,6 +41,7 @@ def compute_information_gain(
     """
     This function returns the information gain of each column in a dataframe
     """
+    
     if mask.shape[0] == 0:
         return 0
     positives = sum(mask) / mask.shape[0]
