@@ -59,6 +59,12 @@ import numpy as np
 
 from trees.purity_measurements import compute_information_gain
 
+LOGGING_LEVEL = logging.DEBUG
+logging.basicConfig(
+    level=LOGGING_LEVEL,
+    format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 class DecisionTree:
     """ This class implements the decision tree algorithm for Classification
@@ -115,7 +121,7 @@ class DecisionTree:
         """
 
         self.target = target
-    
+
     def _cast_target(self, dataframe) -> None:
         """ This private method casts the target feature to a categorical type
 
@@ -426,7 +432,7 @@ def get_best_split_feature(
 
     for split in splits:
         mask = feature.isin(split) if is_cat else feature < split
-        info_gain_split = compute_information_gain(target, mask, target.dtype == "O")
+        info_gain_split = compute_information_gain(target, mask, verbose)
         split_value.append(split)
         info_gain.append(info_gain_split)
 
