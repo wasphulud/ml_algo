@@ -53,11 +53,12 @@ TODO:
 
 import logging
 import itertools
+import math
 
 import pandas as pd
 import numpy as np
 
-from trees.purity_measurements import compute_information_gain
+from purity_measurements import compute_information_gain
 
 LOGGING_LEVEL = logging.DEBUG
 logging.basicConfig(
@@ -103,12 +104,12 @@ class DecisionTree:
         mode: str = "classification",
         verbose: bool = False,
     ):
+        self.tree: dict[str, dict] = dict()
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_information_gain = min_information_gain
         self.mode = mode
         self.verbose = verbose
-        self.tree = dict
         self.target = ""
 
 
@@ -269,7 +270,7 @@ class DecisionTree:
         }
         return decision_tree
 
-    def _compute_leaf_value(self, serie: pd.Series) -> str:
+    def _compute_leaf_value(self, serie: pd.Series) -> dict:
         """ This function returns the prediction for a given serie
 
         Args:
@@ -285,9 +286,9 @@ class DecisionTree:
         """
 
         if self.mode == "classification":
-            return serie.value_counts().idxmax()
+            return {"is_leaf": serie.value_counts().idxmax()}
         if self.mode == "regression":
-            return serie.mean()
+            return {"is_leaf": serie.mean()}
         raise ValueError(
             "The mode must be either classification or regression")
 
@@ -303,7 +304,8 @@ class DecisionTree:
         """
 
         # check if the node is a leaf
-
+        if "is_leaf" in decision_tree:
+            return decision_tree["is_leaf"]
         if not isinstance(decision_tree, dict):
             return decision_tree
         # get the split variable
@@ -317,6 +319,7 @@ class DecisionTree:
             if sample[split_variable] in split_value:
                 return self._infer_one_entry(sample, decision_tree["left"])
             return self._infer_one_entry(sample, decision_tree["right"])
+        split_value = split_value[0] # remove the brackets and access the value
         if sample[split_variable] < split_value:
             return self._infer_one_entry(sample, decision_tree["left"])
         return self._infer_one_entry(sample, decision_tree["right"])
@@ -354,6 +357,7 @@ def split_data_node(
     if split_is_categorical:
         mask = dataframe[split_variable].isin(split_value)
     else:
+        split_value = split_value[0]
         mask = dataframe[split_variable] < split_value
     return dataframe[mask], dataframe[~mask]
 
@@ -377,7 +381,7 @@ def get_best_split(
             * the best split variable name
             * the best split value: it can be either a float or a string
             * the best split information gain value
-            * the best split variable type (categorical or numerical)
+            * the best split variable type is categorical
     """
 
     info_gain_recap = (
@@ -385,9 +389,8 @@ def get_best_split(
         .apply(get_best_split_feature, target=dataframe[target_name], verbose=verbose)
         .reset_index(drop=True)
     )
-    print("\n", info_gain_recap)
     if info_gain_recap.iloc[-1].sum() == 0:
-        return [None] * 4
+        return ("", "", -math.inf, False)
 
     info_gain_recap = info_gain_recap.loc[:, info_gain_recap.iloc[-1, :]]
     split_variable = info_gain_recap.iloc[1].astype(np.float64).idxmax()
@@ -400,7 +403,7 @@ def get_best_split(
 
 def get_best_split_feature(
     feature: pd.Series, target: pd.Series, verbose: bool = False
-) -> tuple[str, float, bool, bool]:
+) -> tuple[list, float, bool, bool]:
     """ This function returns the best split for a given feature
 
     Args:
@@ -409,7 +412,7 @@ def get_best_split_feature(
         verbose (bool, optional): verbosity flag. Defaults to False.
 
     Returns:
-        tuple(str, float, bool, bool): A tuple containing:
+        tuple(list, float, bool, bool): A tuple containing:
             * the best split value: it can be either a float or a string
             * the best split information gain
             * the best split variable type (categorical or numerical)
@@ -439,7 +442,7 @@ def get_best_split_feature(
     if len(info_gain) == 0:
         if verbose:
             logging.debug(" --> No information gain")
-        return None, None, is_cat, False
+        return [""], -math.inf, is_cat,False
 
     best_split_info_gain = max(info_gain)
     best_split_value = split_value[info_gain.index(best_split_info_gain)]
@@ -447,11 +450,12 @@ def get_best_split_feature(
     if verbose:
         logging.debug(" --> Best info gain: %s", best_split_info_gain)
         logging.debug(" ----> Best split: %s", best_split_value)
-
+    if not is_cat:
+        best_split_value = [best_split_value]
     return best_split_value, best_split_info_gain, is_cat, True
 
 
-def get_categorical_combinations(feature: pd.Series) -> list[tuple]:
+def get_categorical_combinations(feature: pd.Series) -> list[list]:
     """ This function returns the possible combinations of a categorical variable
 
     The function will return all the possible combinations except the empty
