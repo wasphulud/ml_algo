@@ -1,9 +1,10 @@
 """This is the cli module of the project.
 """
-from argparse import ArgumentParser
+
+from argparse import ArgumentParser, Namespace
 
 
-def parse_args(args):
+def parse_args(args) -> Namespace:
     """ argument parser for the module
 
     Args:

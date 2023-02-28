@@ -4,7 +4,7 @@ and Regression.
 Usage:
 ------
     >>> import pandas as pd
-    >>> from trees.decision_trees import DecisionTree
+    >>> from decision_trees import DecisionTree
     >>> data = pd.read_csv("data/iris.csv")
     >>> training_set = data.sample(frac=0.8, random_state=42)
     >>> test_set = data.drop(training_set.index)
@@ -58,7 +58,7 @@ import math
 import pandas as pd
 import numpy as np
 
-from trees.purity_measurements import compute_information_gain
+from purity_measurements import compute_information_gain
 
 LOGGING_LEVEL = logging.DEBUG
 logging.basicConfig(

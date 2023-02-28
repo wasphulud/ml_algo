@@ -3,7 +3,7 @@
 It reads the cli arguments and creates a DecisionTree object to train and test the model.
 
 Usage:
-    python main.py 
+    python main.py
         --csv <path_to_csv_file>
         --target_label <target_label>
         --mode <classification/regression>
@@ -17,9 +17,9 @@ import sys
 import logging
 import pandas as pd
 
-from trees.cli import parse_args
-from trees.decision_trees import DecisionTree
-from trees.read_files import (
+from cli import parse_args
+from decision_trees import DecisionTree
+from read_files import (
     read_csv,
     preprocess_bmi_dataset,
     preprocess_titanic_dataset,
@@ -60,8 +60,8 @@ def main(args):
                 f"preprocess argument not recognized {arguments['preprocess']}"
             )
         logging.debug("dataset info: \n\n %s", data.info())
-        training_set = data.sample(frac=0.8)
-        test_set = data.drop(training_set.index)
+        training_set = data.sample(frac=0.8) # pylint: disable=maybe-no-member
+        test_set = data.drop(training_set.index) # pylint: disable=maybe-no-member
         decision_tree.train(training_set, arguments["target_label"])
         logging.info(
             pd.concat(

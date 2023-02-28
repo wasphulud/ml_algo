@@ -3,7 +3,7 @@ and Regression.
 
 Usage:
 ------
-    >>> trees.purity_measurements import compute_information_gain
+    >>> purity_measurements import compute_information_gain
     >>> info_gain_split = compute_information_gain(target, mask, target.dtype == "O")
 
 
@@ -72,6 +72,8 @@ def compute_information_gain(
 
     The function computes the information gain of spliting a parent node to two
     children leaves based on a binary mask (defined by the original feature column)
+    The function uses the entropy for categorical (objects) columns and the variance for
+    numerical columns.
 
     Args:
         column: The target column, values of the parent node.
