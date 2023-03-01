@@ -62,7 +62,8 @@ def main(args):
             )
         logging.debug("dataset info: \n\n %s", data.info())
         training_set = data.sample(frac=0.8)  # pylint: disable=maybe-no-member
-        test_set = data.drop(training_set.index)  # pylint: disable=maybe-no-member
+        test_set = data.drop(
+            training_set.index)  # pylint: disable=maybe-no-member
         decision_tree.train(training_set, arguments["target_label"])
         logging.debug(decision_tree.tree)
         logging.info(
