@@ -258,10 +258,12 @@ class DecisionTree:
             logging.debug(" --> Best split: %s", split_variable)
             logging.debug(" --> Best split value: %s", split_value)
             logging.debug(" --> Best split info gain: %s", split_info_gain)
-            logging.debug(" --> Best split is categorical: %s", split_is_categorical)
+            logging.debug(" --> Best split is categorical: %s",
+                          split_is_categorical)
 
         # split the dataframe using the variable and its value to two children
-        left_data, right_data = split_data_node(dataframe, split_variable, split_value)
+        left_data, right_data = split_data_node(
+            dataframe, split_variable, split_value)
 
         # compute the two children subtrees recursively
         left_response = self._build_tree(left_data, max_depth - 1)
@@ -271,7 +273,8 @@ class DecisionTree:
         # leaf
         if left_response == right_response:
             if self.verbose:
-                logging.debug(" [OUT] --> Left and right responses are the same")
+                logging.debug(
+                    " [OUT] --> Left and right responses are the same")
             return left_response
 
         # The final decision tree
@@ -304,7 +307,8 @@ class DecisionTree:
             return {"is_leaf": serie.value_counts().idxmax()}
         if self.mode == "regression":
             return {"is_leaf": serie.mean()}
-        raise ValueError("The mode must be either classification or regression")
+        raise ValueError(
+            "The mode must be either classification or regression")
 
     def _infer_one_entry(self, sample: pd.Series, decision_tree: dict) -> str:
         """This function returns the prediction for a given sample
