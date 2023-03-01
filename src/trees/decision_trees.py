@@ -449,7 +449,7 @@ def get_best_split_feature(
 
     for split in splits:
         mask = feature.isin(split) if is_cat else feature < split
-        info_gain_split = compute_information_gain(target, mask, verbose)
+        info_gain_split = compute_information_gain(target, mask)
         split_value.append(split)
         info_gain.append(info_gain_split)
 

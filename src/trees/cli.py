@@ -5,7 +5,7 @@ from argparse import ArgumentParser, Namespace
 
 
 def parse_args(args) -> Namespace:
-    """ argument parser for the module
+    """argument parser for the module
 
     Args:
         args: arguments to be parsed

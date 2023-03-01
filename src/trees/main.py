@@ -47,6 +47,7 @@ def main(args):
         mode=arguments["mode"],
         verbose=arguments["verbose"],
     )
+
     if arguments["csv"]:
         data = read_csv(args.csv)
         # check for the preprocessing if it exists and apply it
@@ -60,9 +61,10 @@ def main(args):
                 f"preprocess argument not recognized {arguments['preprocess']}"
             )
         logging.debug("dataset info: \n\n %s", data.info())
-        training_set = data.sample(frac=0.8) # pylint: disable=maybe-no-member
-        test_set = data.drop(training_set.index) # pylint: disable=maybe-no-member
+        training_set = data.sample(frac=0.8)  # pylint: disable=maybe-no-member
+        test_set = data.drop(training_set.index)  # pylint: disable=maybe-no-member
         decision_tree.train(training_set, arguments["target_label"])
+        logging.debug(decision_tree.tree)
         logging.info(
             pd.concat(
                 [
