@@ -4,13 +4,14 @@ and Regression.
 Usage:
 ------
     >>> import pandas as pd
-    >>> from decision_trees import DecisionTree
-    >>> data = pd.read_csv("data/iris.csv")
+    >>> from trees.decision_trees import DecisionTree
+    >>> data = pd.read_csv("../../../data/data.csv")
+    >>> data["Index"] = data["Index"] >= 4
     >>> training_set = data.sample(frac=0.8, random_state=42)
     >>> test_set = data.drop(training_set.index)
     >>> decision_tree = DecisionTree(max_depth=5, min_samples_split=10, verbose=True)
-    >>> decision_tree.train(data, "species")
-    >>> decision_tree.infer_sample(test_set)
+    >>> tree = decision_tree.train(data, "Index")
+    >>> predicted_values = decision_tree.infer_sample(test_set)
 
 Classes:
 --------
@@ -429,7 +430,7 @@ def get_best_split_feature(
         tuple(list, float, bool, bool): A tuple containing:
             * the best split value: it can be either a float or a string
             * the best split information gain
-            * the best split variable type (categorical or numerical)
+            * if the best split variable type is catagorical
             * a boolean indicating if the split is valid or not
     """
 
