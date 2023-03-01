@@ -4,12 +4,13 @@ and Regression.
 Usage:
 ------
     >>> import pandas as pd
-    >>> from trees.decision_trees import DecisionTree
+    >>> from decision_trees import DecisionTree, DecisionTreeInputs
     >>> data = pd.read_csv("../../../data/data.csv")
     >>> data["Index"] = data["Index"] >= 4
     >>> training_set = data.sample(frac=0.8, random_state=42)
     >>> test_set = data.drop(training_set.index)
-    >>> decision_tree = DecisionTree(max_depth=5, min_samples_split=10, verbose=True)
+    >>> decision_tree_inputs = DecisionTreeInputs()
+    >>> decision_tree = DecisionTree(decision_tree_inputs=decision_tree_inputs, verbose=True)
     >>> tree = decision_tree.train(data, "Index")
     >>> predicted_values = decision_tree.infer_sample(test_set)
 
@@ -56,6 +57,7 @@ import logging
 import itertools
 import math
 
+from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 
@@ -69,6 +71,27 @@ logging.basicConfig(
 )
 
 
+@dataclass
+class DecisionTreeInputs:
+    """This class contains the inputs for the decision tree algorithm.
+
+    Attributes:
+        max_depth (int): The maximum depth of the tree.
+        min_samples_split (int): The minimum number of samples
+            required to split an internal node.
+        min_information_gain (float): The minimum information gain
+            required to split an internal node.
+        mode (str): The mode of the tree. Either classification or regression.
+        verbose (bool): If True, the tree will print out the information
+            about the training.
+    """
+
+    max_depth: int = 5
+    min_samples_split: int = 10
+    min_information_gain: float = 1e-10
+    mode: str = "classification"
+    verbose: bool = False
+
 class DecisionTree:
     """This class implements the decision tree algorithm for Classification
     and Regression.
@@ -79,12 +102,7 @@ class DecisionTree:
     [TODO] Gini Index is NOT used as of now.
 
     Attributes:
-        max_depth (int): The maximum depth of the tree.
-        min_samples_split (int): The minimum number of samples
-            required to split an internal node.
-        min_information_gain (float): The minimum information gain
-            required to split an internal node.
-        mode (str): The mode of the tree. Either classification or regression.
+        decision_tree_inputs (DecisionTreeInputs): The inputs dataclass for the decision
         verbose (bool): If True, the tree will print out the information
             about the training.
 
@@ -100,17 +118,14 @@ class DecisionTree:
     # initialize the class
     def __init__(
         self,
-        max_depth: int = 5,
-        min_samples_split: int = 10,
-        min_information_gain: float = 1e-10,
-        mode: str = "classification",
+        decision_tree_inputs: DecisionTreeInputs = DecisionTreeInputs(),
         verbose: bool = False,
     ):
         self.tree: dict[str, dict] = {}
-        self.max_depth = max_depth
-        self.min_samples_split = min_samples_split
-        self.min_information_gain = min_information_gain
-        self.mode = mode
+        self.max_depth = decision_tree_inputs.max_depth
+        self.min_samples_split = decision_tree_inputs.min_samples_split
+        self.min_information_gain = decision_tree_inputs.min_information_gain
+        self.mode = decision_tree_inputs.mode
         self.verbose = verbose
         self.target = ""
 

@@ -18,7 +18,7 @@ import logging
 import pandas as pd
 
 from trees.cli import parse_args
-from trees.decision_trees import DecisionTree
+from trees.decision_trees import DecisionTree, DecisionTreeInputs
 from trees.read_files import (
     read_csv,
     preprocess_bmi_dataset,
@@ -40,11 +40,15 @@ def main(args):
     args = parse_args(args)
     arguments = vars(args)
     logging.info("cli arguments: %s", arguments)
-    decision_tree = DecisionTree(
+    decision_tree_inputs = DecisionTreeInputs(
         max_depth=arguments["max_depth"],
         min_samples_split=arguments["min_samples_split"],
         min_information_gain=arguments["min_information_gain"],
         mode=arguments["mode"],
+        verbose=arguments["verbose"],
+    )
+    decision_tree = DecisionTree(
+        decision_tree_inputs=decision_tree_inputs,
         verbose=arguments["verbose"],
     )
 
@@ -75,6 +79,8 @@ def main(args):
                 axis=1,
             )
         )
+        logging.info(sum((test_set[arguments["target_label"]] ==
+                     decision_tree.infer_sample(test_set)) / len(test_set)))
     else:
         logging.info("No csv file provided")
     logging.info("Goodbye!")
