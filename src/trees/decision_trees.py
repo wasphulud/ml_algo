@@ -4,13 +4,13 @@ and Regression.
 Usage:
 ------
     >>> import pandas as pd
-    >>> from decision_trees import DecisionTree, DecisionTreeInputs
+    >>> from decision_trees import DecisionTree, DecisionTreeParams
     >>> data = pd.read_csv("../../../data/data.csv")
     >>> data["Index"] = data["Index"] >= 4
     >>> training_set = data.sample(frac=0.8, random_state=42)
     >>> test_set = data.drop(training_set.index)
-    >>> decision_tree_inputs = DecisionTreeInputs()
-    >>> decision_tree = DecisionTree(decision_tree_inputs=decision_tree_inputs, verbose=True)
+    >>> decision_tree_params = DecisionTreeParams()
+    >>> decision_tree = DecisionTree(decision_tree_params=decision_tree_params, verbose=True)
     >>> tree = decision_tree.train(data, "Index")
     >>> predicted_values = decision_tree.infer_sample(test_set)
 
@@ -62,17 +62,11 @@ import pandas as pd
 import numpy as np
 
 from trees.purity_measurements import compute_information_gain
-
-LOGGING_LEVEL = logging.DEBUG
-logging.basicConfig(
-    level=LOGGING_LEVEL,
-    format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+from trees.decorators import timer
 
 
 @dataclass
-class DecisionTreeInputs:
+class DecisionTreeParams:
     """This class contains the inputs for the decision tree algorithm.
 
     Attributes:
@@ -92,6 +86,7 @@ class DecisionTreeInputs:
     mode: str = "classification"
     verbose: bool = False
 
+
 class DecisionTree:
     """This class implements the decision tree algorithm for Classification
     and Regression.
@@ -102,7 +97,7 @@ class DecisionTree:
     [TODO] Gini Index is NOT used as of now.
 
     Attributes:
-        decision_tree_inputs (DecisionTreeInputs): The inputs dataclass for the decision
+        decision_tree_params (DecisionTreeParams): The inputs dataclass for the decision
         verbose (bool): If True, the tree will print out the information
             about the training.
 
@@ -118,14 +113,14 @@ class DecisionTree:
     # initialize the class
     def __init__(
         self,
-        decision_tree_inputs: DecisionTreeInputs = DecisionTreeInputs(),
+        decision_tree_params: DecisionTreeParams = DecisionTreeParams(),
         verbose: bool = False,
     ):
         self.tree: dict[str, dict] = {}
-        self.max_depth = decision_tree_inputs.max_depth
-        self.min_samples_split = decision_tree_inputs.min_samples_split
-        self.min_information_gain = decision_tree_inputs.min_information_gain
-        self.mode = decision_tree_inputs.mode
+        self.max_depth = decision_tree_params.max_depth
+        self.min_samples_split = decision_tree_params.min_samples_split
+        self.min_information_gain = decision_tree_params.min_information_gain
+        self.mode = decision_tree_params.mode
         self.verbose = verbose
         self.target = ""
 
@@ -165,6 +160,7 @@ class DecisionTree:
             )
         dataframe[self.target] = dataframe[self.target].astype("float32")
 
+    @timer
     def train(self, dataframe: pd.DataFrame, target: str) -> dict:
         """This method trains the decision tree using the input dataframe.
 
@@ -273,12 +269,10 @@ class DecisionTree:
             logging.debug(" --> Best split: %s", split_variable)
             logging.debug(" --> Best split value: %s", split_value)
             logging.debug(" --> Best split info gain: %s", split_info_gain)
-            logging.debug(" --> Best split is categorical: %s",
-                          split_is_categorical)
+            logging.debug(" --> Best split is categorical: %s", split_is_categorical)
 
         # split the dataframe using the variable and its value to two children
-        left_data, right_data = split_data_node(
-            dataframe, split_variable, split_value)
+        left_data, right_data = split_data_node(dataframe, split_variable, split_value)
 
         # compute the two children subtrees recursively
         left_response = self._build_tree(left_data, max_depth - 1)
@@ -288,8 +282,7 @@ class DecisionTree:
         # leaf
         if left_response == right_response:
             if self.verbose:
-                logging.debug(
-                    " [OUT] --> Left and right responses are the same")
+                logging.debug(" [OUT] --> Left and right responses are the same")
             return left_response
 
         # The final decision tree
@@ -322,8 +315,7 @@ class DecisionTree:
             return {"is_leaf": serie.value_counts().idxmax()}
         if self.mode == "regression":
             return {"is_leaf": serie.mean()}
-        raise ValueError(
-            "The mode must be either classification or regression")
+        raise ValueError("The mode must be either classification or regression")
 
     def _infer_one_entry(self, sample: pd.Series, decision_tree: dict) -> str:
         """This function returns the prediction for a given sample
@@ -358,6 +350,7 @@ class DecisionTree:
             return self._infer_one_entry(sample, decision_tree["left"])
         return self._infer_one_entry(sample, decision_tree["right"])
 
+    @timer
     def infer_sample(self, dataframe: pd.DataFrame) -> pd.Series:
         """This function returns the prediction for a given dataframe
 

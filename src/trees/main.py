@@ -18,7 +18,7 @@ import logging
 import pandas as pd
 
 from trees.cli import parse_args
-from trees.decision_trees import DecisionTree, DecisionTreeInputs
+from trees.decision_trees import DecisionTree, DecisionTreeParams
 from trees.read_files import (
     read_csv,
     preprocess_bmi_dataset,
@@ -26,6 +26,13 @@ from trees.read_files import (
 )
 
 logger = logging.getLogger(__name__)
+
+LOGGING_LEVEL = logging.INFO
+logging.basicConfig(
+    level=LOGGING_LEVEL,
+    format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 def main(args):
@@ -40,7 +47,7 @@ def main(args):
     args = parse_args(args)
     arguments = vars(args)
     logging.info("cli arguments: %s", arguments)
-    decision_tree_inputs = DecisionTreeInputs(
+    decision_tree_params = DecisionTreeParams(
         max_depth=arguments["max_depth"],
         min_samples_split=arguments["min_samples_split"],
         min_information_gain=arguments["min_information_gain"],
@@ -48,7 +55,7 @@ def main(args):
         verbose=arguments["verbose"],
     )
     decision_tree = DecisionTree(
-        decision_tree_inputs=decision_tree_inputs,
+        decision_tree_params=decision_tree_params,
         verbose=arguments["verbose"],
     )
 
@@ -66,8 +73,7 @@ def main(args):
             )
         logging.debug("dataset info: \n\n %s", data.info())
         training_set = data.sample(frac=0.8)  # pylint: disable=maybe-no-member
-        test_set = data.drop(
-            training_set.index)  # pylint: disable=maybe-no-member
+        test_set = data.drop(training_set.index)  # pylint: disable=maybe-no-member
         decision_tree.train(training_set, arguments["target_label"])
         logging.debug(decision_tree.tree)
         logging.info(
@@ -79,8 +85,15 @@ def main(args):
                 axis=1,
             )
         )
-        logging.info(sum((test_set[arguments["target_label"]] ==
-                     decision_tree.infer_sample(test_set)) / len(test_set)))
+        logging.info(
+            sum(
+                (
+                    test_set[arguments["target_label"]]
+                    == decision_tree.infer_sample(test_set)
+                )
+                / len(test_set)
+            )
+        )
     else:
         logging.info("No csv file provided")
     logging.info("Goodbye!")
