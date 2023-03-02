@@ -1,8 +1,8 @@
 import unittest
-
-from decision_trees import get_best_split_feature
 import pandas as pd
 import numpy as np
+
+from trees.decision_trees import get_best_split_feature
 
 
 class Test_TestBestSplit(unittest.TestCase):

@@ -15,7 +15,6 @@ Usage:
 """
 import sys
 import logging
-import pandas as pd
 
 from trees.cli import parse_args
 from trees.decision_trees import DecisionTree, DecisionTreeParams
@@ -30,7 +29,9 @@ logger = logging.getLogger(__name__)
 LOGGING_LEVEL = logging.INFO
 logging.basicConfig(
     level=LOGGING_LEVEL,
-    format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
+    format=(
+        "%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s"
+    ),
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
@@ -71,21 +72,13 @@ def main(args):
             raise ValueError(
                 f"preprocess argument not recognized {arguments['preprocess']}"
             )
-        logging.debug("dataset info: \n\n %s", data.info())
-        training_set = data.sample(frac=0.8)  # pylint: disable=maybe-no-member
+        training_set = data.sample(
+            frac=0.8, random_state=42
+        )  # pylint: disable=maybe-no-member
         test_set = data.drop(training_set.index)  # pylint: disable=maybe-no-member
         decision_tree.train(training_set, arguments["target_label"])
-        logging.debug(decision_tree.tree)
         logging.info(
-            pd.concat(
-                [
-                    test_set[arguments["target_label"]],
-                    decision_tree.infer_sample(test_set),
-                ],
-                axis=1,
-            )
-        )
-        logging.info(
+            "The model accuracy is: %.2f%%",
             sum(
                 (
                     test_set[arguments["target_label"]]
@@ -93,6 +86,7 @@ def main(args):
                 )
                 / len(test_set)
             )
+            * 100,
         )
     else:
         logging.info("No csv file provided")

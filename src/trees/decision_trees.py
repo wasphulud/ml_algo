@@ -39,8 +39,7 @@ TODO:
     * Model the tree as class on its own, or dataclass.
     * implement grid search ?
     * implement cross validation ?
-    * Add the Gini Index
-    * Add the CART algorithm
+    * Add the Gini Index -> Add the CART algorithm ?
     * Add the pruning algorithm ??
     * Add the random forest algorithm
     * Add the gradient boosting algorithm ??
@@ -122,7 +121,7 @@ class DecisionTree:
         self.min_information_gain = decision_tree_params.min_information_gain
         self.mode = decision_tree_params.mode
         self.verbose = verbose
-        self.target = ""
+        self._target = ""
 
     def _init_target(self, target: str) -> None:
         """This private method initializes the target feature
@@ -131,7 +130,7 @@ class DecisionTree:
             target (str): target's feature name
         """
 
-        self.target = target
+        self._target = target
 
     def _cast_target(self, dataframe) -> None:
         """This private method casts the target feature to the relevant type.
@@ -144,21 +143,22 @@ class DecisionTree:
         Args:
             dataframe (pd.DataFrame): training dataset
         """
-        target_type = dataframe[self.target].dtype
+        target_type = dataframe[self._target].dtype
         if self.mode == "classification":
             if target_type != "object":
                 logging.warning(
-                    "target column is not of type object and is %s ---> casting to object",
+                    "target column is not of type object and is %s ---> casting to"
+                    " object",
                     target_type,
                 )
-            dataframe[self.target] = dataframe[self.target].astype("object")
+            dataframe[self._target] = dataframe[self._target].astype("object")
             return
         if target_type == "object":
             logging.warning(
-                "target column is type object and is where it shoult\
-                    be float/float32/float64 ---> casting to float32"
+                "target column is type object and is where it shoult                   "
+                " be float/float32/float64 ---> casting to float32"
             )
-        dataframe[self.target] = dataframe[self.target].astype("float32")
+        dataframe[self._target] = dataframe[self._target].astype("float32")
 
     @timer
     def train(self, dataframe: pd.DataFrame, target: str) -> dict:
@@ -196,7 +196,7 @@ class DecisionTree:
             return False, None, " [OUT] --> Empty dataframe"
 
         # check if the dataframe is pure
-        if dataframe[self.target].nunique() == 1:
+        if dataframe[self._target].nunique() == 1:
             return (
                 False,
                 dataframe,
@@ -249,7 +249,7 @@ class DecisionTree:
                 logging.debug(validation_message)
             if validation_dataframe is None:
                 return {}
-            return self._compute_leaf_value(dataframe[self.target])
+            return self._compute_leaf_value(dataframe[self._target])
 
         # get the best split
         (
@@ -257,13 +257,13 @@ class DecisionTree:
             split_value,
             split_info_gain,
             split_is_categorical,
-        ) = get_best_split(dataframe, self.target, self.verbose)
+        ) = get_best_split(dataframe, self._target, self.verbose)
 
         # Is the information gain termination gain is met ?
         if split_info_gain is None or split_info_gain < self.min_information_gain:
             if self.verbose:
                 logging.debug(" [OUT] --> Min information gain reached")
-            return self._compute_leaf_value(dataframe[self.target])
+            return self._compute_leaf_value(dataframe[self._target])
 
         if self.verbose:
             logging.debug(" --> Best split: %s", split_variable)
@@ -297,7 +297,7 @@ class DecisionTree:
         return decision_tree
 
     def _compute_leaf_value(self, serie: pd.Series) -> dict:
-        """This function returns the prediction for a given serie
+        """This function returns the prediction for a given serie living in a single leaf
 
         Args:
             serie (pd.Series): The values from which to compute the node's value.
@@ -352,7 +352,7 @@ class DecisionTree:
 
     @timer
     def infer_sample(self, dataframe: pd.DataFrame) -> pd.Series:
-        """This function returns the prediction for a given dataframe
+        """This function returns the predictions for a given dataframe
 
         Args:
             dataframe (pd.DataFrame): the dataframe for which the user wants
@@ -501,4 +501,4 @@ def get_categorical_combinations(feature: pd.Series) -> list[list]:
     for length in range(0, len(feature) + 1):
         for subset in itertools.combinations(feature, length):
             options.append(list(subset))
-    return options[1:-1]  # remove the empty list and the full list
+    return options[1:-1]  # remove the empty and the full lists
