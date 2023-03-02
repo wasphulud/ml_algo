@@ -36,7 +36,7 @@ def compute_entropy_column(column: pd.Series) -> float:
     return -sum(prob * np.log2(prob))
 
 
-def compute_entropy(dataframe: pd.DataFrame) -> pd.Series:
+def compute_entropy(dataframe: pd.DataFrame) -> pd.Series:  # dead: disable
     """This function computes the entropy of each column in a dataframe
 
     Args:

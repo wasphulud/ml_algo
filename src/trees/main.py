@@ -24,7 +24,6 @@ from trees.read_files import (
     preprocess_titanic_dataset,
 )
 
-logger = logging.getLogger(__name__)
 
 LOGGING_LEVEL = logging.INFO
 logging.basicConfig(
