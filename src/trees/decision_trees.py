@@ -4,8 +4,8 @@ and Regression.
 Usage:
 ------
     >>> import pandas as pd
-    >>> from decision_trees import DecisionTree, DecisionTreeParams
-    >>> data = pd.read_csv("../../../data/data.csv")
+    >>> from trees.decision_trees import DecisionTree, DecisionTreeParams
+    >>> data = pd.read_csv("../../data/bmi.csv")
     >>> data["Index"] = data["Index"] >= 4
     >>> training_set = data.sample(frac=0.8, random_state=42)
     >>> test_set = data.drop(training_set.index)
@@ -62,6 +62,7 @@ import numpy as np
 
 from trees.purity_measurements import compute_information_gain
 from trees.decorators import timer
+from trees.exceptions import UnsupportedModeError
 
 
 @dataclass
@@ -109,41 +110,50 @@ class DecisionTree:
             sample.
     """
 
+    tree: dict[str, dict] = {}
+    _target_label: str = ""
+
     # initialize the class
     def __init__(
         self,
         decision_tree_params: DecisionTreeParams = DecisionTreeParams(),
         verbose: bool = False,
     ):
-        self.tree: dict[str, dict] = {}
         self.max_depth = decision_tree_params.max_depth
         self.min_samples_split = decision_tree_params.min_samples_split
         self.min_information_gain = decision_tree_params.min_information_gain
         self.mode = decision_tree_params.mode
+        self._check_mode()  # check if the mode is supported
         self.verbose = verbose
-        self._target = ""
 
-    def _init_target(self, target: str) -> None:
+    def _check_mode(self):
+        """This private method checks if the mode is supported."""
+        if self.mode not in ["classification", "regression"]:
+            raise UnsupportedModeError(
+                "The mode is not supported. Please choose between classification and"
+                " regression"
+            )
+
+    def _init_target_label(self, target: str) -> None:
         """This private method initializes the target feature
 
         Args:
             target (str): target's feature name
         """
 
-        self._target = target
+        self._target_label = target
 
-    def _cast_target(self, dataframe) -> None:
+    def _cast_target_label(self, dataframe) -> None:
         """This private method casts the target feature to the relevant type.
 
         If the mode is classification, the target is casted to object.
         If the mode is regression, the target is casted to float.
-        The method DOES NOT raise an error if the mode is not recognized. please
-        check _compute_leaf_value.
+
 
         Args:
             dataframe (pd.DataFrame): training dataset
         """
-        target_type = dataframe[self._target].dtype
+        target_type = dataframe[self._target_label].dtype
         if self.mode == "classification":
             if target_type != "object":
                 logging.warning(
@@ -151,17 +161,19 @@ class DecisionTree:
                     " object",
                     target_type,
                 )
-            dataframe[self._target] = dataframe[self._target].astype("object")
+            dataframe[self._target_label] = dataframe[self._target_label].astype(
+                "object"
+            )
             return
         if target_type == "object":
             logging.warning(
                 "target column is type object and is where it shoult                   "
                 " be float/float32/float64 ---> casting to float32"
             )
-        dataframe[self._target] = dataframe[self._target].astype("float32")
+        dataframe[self._target_label] = dataframe[self._target_label].astype("float32")
 
     @timer
-    def train(self, dataframe: pd.DataFrame, target: str) -> dict:
+    def train(self, dataframe: pd.DataFrame, target_labelt: str) -> dict:
         """This method trains the decision tree using the input dataframe.
 
         Args:
@@ -172,8 +184,8 @@ class DecisionTree:
             dict: The decision tree
         """
 
-        self._init_target(target)
-        self._cast_target(dataframe)
+        self._init_target_label(target_labelt)
+        self._cast_target_label(dataframe)
         self.tree = self._build_tree(dataframe, self.max_depth)
         return self.tree
 
@@ -196,7 +208,7 @@ class DecisionTree:
             return False, None, " [OUT] --> Empty dataframe"
 
         # check if the dataframe is pure
-        if dataframe[self._target].nunique() == 1:
+        if dataframe[self._target_label].nunique() == 1:
             return (
                 False,
                 dataframe,
@@ -249,7 +261,7 @@ class DecisionTree:
                 logging.debug(validation_message)
             if validation_dataframe is None:
                 return {}
-            return self._compute_leaf_value(dataframe[self._target])
+            return self._compute_leaf_value(dataframe[self._target_label])
 
         # get the best split
         (
@@ -257,13 +269,13 @@ class DecisionTree:
             split_value,
             split_info_gain,
             split_is_categorical,
-        ) = get_best_split(dataframe, self._target, self.verbose)
+        ) = get_best_split(dataframe, self._target_label, self.verbose)
 
         # Is the information gain termination gain is met ?
         if split_info_gain is None or split_info_gain < self.min_information_gain:
             if self.verbose:
                 logging.debug(" [OUT] --> Min information gain reached")
-            return self._compute_leaf_value(dataframe[self._target])
+            return self._compute_leaf_value(dataframe[self._target_label])
 
         if self.verbose:
             logging.debug(" --> Best split: %s", split_variable)
