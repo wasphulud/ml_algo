@@ -126,7 +126,7 @@ class DecisionTree:
         self._check_mode()  # check if the mode is supported
         self.verbose = verbose
 
-    def _check_mode(self):
+    def _check_mode(self) -> None:
         """This private method checks if the mode is supported."""
         if self.mode not in ["classification", "regression"]:
             raise UnsupportedModeError(
@@ -143,7 +143,7 @@ class DecisionTree:
 
         self._target_label = target
 
-    def _cast_target_label(self, dataframe) -> None:
+    def _cast_target_label(self, dataframe: pd.DataFrame) -> None:
         """This private method casts the target feature to the relevant type.
 
         If the mode is classification, the target is casted to object.
@@ -378,7 +378,9 @@ class DecisionTree:
 
 
 def split_data_node(
-    dataframe: pd.DataFrame, split_variable: str, split_value
+    dataframe: pd.DataFrame,
+    split_variable: str,
+    split_value: str,  # the split value is not cesea=ssarily a string FIXME
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """This function returns the split dataframe based on a variable
 
