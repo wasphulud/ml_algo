@@ -41,7 +41,7 @@ def main(args: list[Any]) -> None:
         args: arguments to be parsed see cli.py
 
     Raises:
-        ValueError: if  preprocess argument is not recognized
+        ValueError: if preprocess argument is not recognized
     """
     args_namespace = parse_args(args)
     arguments = vars(args_namespace)
