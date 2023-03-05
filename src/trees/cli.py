@@ -2,9 +2,10 @@
 """
 
 from argparse import ArgumentParser, Namespace
+from typing import Any
 
 
-def parse_args(args) -> Namespace:
+def parse_args(args: list[Any]) -> Namespace:
     """argument parser for the module
 
     Args:
@@ -13,7 +14,6 @@ def parse_args(args) -> Namespace:
     Returns:
         parsed arguments
     """
-
     parser = ArgumentParser()
     parser.add_argument("--csv", type=str)
     parser.add_argument("--preprocess", type=str, default="")

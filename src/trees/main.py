@@ -15,6 +15,7 @@ Usage:
 """
 import sys
 import logging
+from typing import Any
 
 from trees.cli import parse_args
 from trees.decision_trees import DecisionTree, DecisionTreeParams
@@ -28,14 +29,12 @@ from trees.read_files import (
 LOGGING_LEVEL = logging.INFO
 logging.basicConfig(
     level=LOGGING_LEVEL,
-    format=(
-        "%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s"
-    ),
+    format="%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
 
-def main(args):
+def main(args: list[Any]) -> None:
     """main function of the module
 
     Args:
@@ -44,15 +43,14 @@ def main(args):
     Raises:
         ValueError: if preprocess argument is not recognized
     """
-    args = parse_args(args)
-    arguments = vars(args)
+    args_namespace = parse_args(args)
+    arguments = vars(args_namespace)
     logging.info("cli arguments: %s", arguments)
     decision_tree_params = DecisionTreeParams(
         max_depth=arguments["max_depth"],
         min_samples_split=arguments["min_samples_split"],
         min_information_gain=arguments["min_information_gain"],
         mode=arguments["mode"],
-        verbose=arguments["verbose"],
     )
     decision_tree = DecisionTree(
         decision_tree_params=decision_tree_params,
@@ -60,7 +58,7 @@ def main(args):
     )
 
     if arguments["csv"]:
-        data = read_csv(args.csv)
+        data = read_csv(arguments["csv"])
         # check for the preprocessing if it exists and apply it
         if arguments["preprocess"] == "bmi":
             data = preprocess_bmi_dataset(data, arguments["target_label"])

@@ -57,6 +57,7 @@ import itertools
 import math
 
 from dataclasses import dataclass
+from typing import Optional
 import pandas as pd
 import numpy as np
 
@@ -76,15 +77,12 @@ class DecisionTreeParams:
         min_information_gain (float): The minimum information gain
             required to split an internal node.
         mode (str): The mode of the tree. Either classification or regression.
-        verbose (bool): If True, the tree will print out the information
-            about the training.
     """
 
     max_depth: int = 5
     min_samples_split: int = 10
     min_information_gain: float = 1e-10
     mode: str = "classification"
-    verbose: bool = False
 
 
 class DecisionTree:
@@ -117,7 +115,7 @@ class DecisionTree:
     def __init__(
         self,
         decision_tree_params: DecisionTreeParams = DecisionTreeParams(),
-        verbose: bool = False,
+        verbose: Optional[bool] = False,
     ):
         self.max_depth = decision_tree_params.max_depth
         self.min_samples_split = decision_tree_params.min_samples_split
@@ -404,7 +402,7 @@ def split_data_node(
 
 
 def get_best_split(
-    dataframe: pd.DataFrame, target_name: str, verbose: bool = False
+    dataframe: pd.DataFrame, target_name: str, verbose: Optional[bool] = False
 ) -> tuple[str, str, float, bool]:
     """This function returns the best split for a given dataframe.
 
