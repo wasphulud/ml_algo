@@ -49,7 +49,7 @@ class Test_TestBestSplit(unittest.TestCase):
         assert (
             best_split_info_gain == 0.3
         ), "The best split information gain should be 0.3"
-        assert is_cat == True, "The best split variable type should be categorical"
+        assert is_cat == True, "The best split variable type should be cat"
         assert is_valid == True, "The split should be valid"
 
 
