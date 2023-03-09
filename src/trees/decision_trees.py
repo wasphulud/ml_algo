@@ -171,18 +171,18 @@ class DecisionTree:
         dataframe[self._target_label] = dataframe[self._target_label].astype("float32")
 
     @timer
-    def train(self, dataframe: pd.DataFrame, target_labelt: str) -> dict:
+    def train(self, dataframe: pd.DataFrame, target_label: str) -> dict:
         """This method trains the decision tree using the input dataframe.
 
         Args:
             dataframe (pd.DataFrame): training dataset
-            target (str): target's feature name
+            target_label (str): target's feature name
 
         Returns:
             dict: The decision tree
         """
 
-        self._init_target_label(target_labelt)
+        self._init_target_label(target_label)
         self._cast_target_label(dataframe)
         self.tree = self._build_tree(dataframe, self.max_depth)
         return self.tree

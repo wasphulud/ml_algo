@@ -78,6 +78,7 @@ def compute_information_gain(
     Args:
         column: The target column, values of the parent node.
         mask: A binary mask defined by the original feature column.
+        verbose: If True, the function will print the type of the target column.
     Returns:
         float: The information gain of the split.
 
