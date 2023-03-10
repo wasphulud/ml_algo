@@ -35,6 +35,7 @@ Imported Functions:
     compute_information_gain(pd.Series, pd.Series, bool, bool) -> float
 
 TODO:
+    * Change to monorepo repo ?
     * Compute accuracy
     * Model the tree as class on its own, or dataclass.
     * implement grid search ?
