@@ -107,7 +107,7 @@ class DecisionTree(SupervisedTabularDataModel):
             about the training.
 
 
-    Methods:
+    Methods: TODO: these public methods are now depricated.
         train(dataframe: pd.DataFrame, target: str) -> dict
             This function trains the tree.
         infer(dataframe: pd.DataFrame, decision_tree: dict) -> pd.Series
