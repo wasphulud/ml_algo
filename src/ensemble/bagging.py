@@ -1,7 +1,7 @@
 """ This module implements the bagging algorithm for Classification
 and Regression.
 """
-from typing import List, Type
+from typing import List
 import pandas as pd
 import numpy as np
 
@@ -72,8 +72,8 @@ class GenericBagging(SupervisedTabularDataModel):
         predictions = np.zeros((dataframe.shape[0], len(self.estimators)))
         for i, estimator in enumerate(self.estimators):
             predictions[:, i] = estimator.predict(dataframe)
-        predictions = pd.DataFrame(predictions)
-        mode = predictions.mode(axis=1)
+        predictions_pd: pd.DataFrame = pd.DataFrame(predictions)
+        mode = predictions_pd.mode(axis=1)
         return mode
 
     def score(self, dataframe: pd.DataFrame, target: pd.Series) -> float:
