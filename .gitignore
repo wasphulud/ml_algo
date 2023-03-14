@@ -1,5 +1,6 @@
 # custom files
 visualization.py
+bagging.py
 .vscode/
 # images
 *.png

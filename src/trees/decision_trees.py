@@ -171,6 +171,12 @@ class DecisionTree:
             )
         dataframe[self._target_label] = dataframe[self._target_label].astype("float32")
 
+    def fit(self, dataframe: pd.DataFrame, target: pd.Series) -> DecisionTree:
+        """This method trains the decision tree using the input dataframe."""
+        target_label = target.name
+        self.train(dataframe, target_label)
+        return self
+
     @timer
     def train(self, dataframe: pd.DataFrame, target_labelt: str) -> dict:
         """This method trains the decision tree using the input dataframe.
