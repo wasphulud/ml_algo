@@ -17,7 +17,7 @@ def timer(func: Callable[..., RT]) -> Callable[..., RT]:
         value = func(*args, **kwargs)
         end_time = time.perf_counter()
         run_time = end_time - start_time
-        logging.info(
+        logging.debug(
             "Finished running %r function in %.4f secs", func.__name__, run_time
         )
         return value
@@ -33,9 +33,9 @@ def debug(func: Callable[..., RT]) -> Callable[..., RT]:
         args_repr = [repr(a) for a in args]
         kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
         signature = ", ".join(args_repr + kwargs_repr)
-        logging.info("Calling %s  %s", func.__name__, signature)
+        logging.debug("Calling %s  %s", func.__name__, signature)
         value = func(*args, **kwargs)
-        logging.info("%r returned %r", func.__name__, value)
+        logging.debug("%r returned %r", func.__name__, value)
         return value
 
     return wrapper_debug

@@ -62,6 +62,7 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 
+from abc_models.models import SupervisedTabularDataModel
 from trees.purity_measurements import compute_information_gain
 from trees.decorators import timer
 from trees.exceptions import UnsupportedModeError
@@ -86,7 +87,7 @@ class DecisionTreeParams:
     mode: str = "classification"
 
 
-class DecisionTree:
+class DecisionTree(SupervisedTabularDataModel):
     """This class implements the decision tree algorithm for Classification
     and Regression.
 
@@ -118,6 +119,7 @@ class DecisionTree:
         decision_tree_params: DecisionTreeParams = DecisionTreeParams(),
         verbose: Optional[bool] = False,
     ):
+        super().__init__()
         self.max_depth = decision_tree_params.max_depth
         self.min_samples_split = decision_tree_params.min_samples_split
         self.min_information_gain = decision_tree_params.min_information_gain
@@ -142,7 +144,7 @@ class DecisionTree:
 
         self._target_label = target
 
-    def _cast_target_label(self, dataframe: pd.DataFrame) -> None:
+    def _cast_target_label(self, target: pd.Series) -> None:
         """This private method casts the target feature to the relevant type.
 
         If the mode is classification, the target is casted to object.
@@ -152,7 +154,7 @@ class DecisionTree:
         Args:
             dataframe (pd.DataFrame): training dataset
         """
-        target_type = dataframe[self._target_label].dtype
+        target_type = target.dtype
         if self.mode == "classification":
             if target_type != "object":
                 logging.warning(
@@ -160,25 +162,17 @@ class DecisionTree:
                     " object",
                     target_type,
                 )
-            dataframe[self._target_label] = dataframe[self._target_label].astype(
-                "object"
-            )
+            target = target.astype("object")
             return
         if target_type == "object":
             logging.warning(
                 "target column is type object and is where it shoult                   "
                 " be float/float32/float64 ---> casting to float32"
             )
-        dataframe[self._target_label] = dataframe[self._target_label].astype("float32")
-
-    def fit(self, dataframe: pd.DataFrame, target: pd.Series) -> DecisionTree:
-        """This method trains the decision tree using the input dataframe."""
-        target_label = target.name
-        self.train(dataframe, target_label)
-        return self
+        target = target.astype("float32")
 
     @timer
-    def train(self, dataframe: pd.DataFrame, target_labelt: str) -> dict:
+    def _fit(self, dataframe: pd.DataFrame, target: pd.Series) -> "DecisionTree":
         """This method trains the decision tree using the input dataframe.
 
         Args:
@@ -189,13 +183,14 @@ class DecisionTree:
             dict: The decision tree
         """
 
-        self._init_target_label(target_labelt)
-        self._cast_target_label(dataframe)
-        self.tree = self._build_tree(dataframe, self.max_depth)
-        return self.tree
+        target_label = target.name
+        self._init_target_label(target_label)
+        self._cast_target_label(target)
+        self.tree = self._build_tree(dataframe, target, self.max_depth)
+        return self
 
     def _validate_dataframe(
-        self, dataframe: pd.DataFrame, max_depth: int
+        self, dataframe: pd.DataFrame, target: pd.Series, max_depth: int
     ) -> tuple[bool, pd.DataFrame, str]:
         """This function validates the dataframe
 
@@ -213,7 +208,7 @@ class DecisionTree:
             return False, None, " [OUT] --> Empty dataframe"
 
         # check if the dataframe is pure
-        if dataframe[self._target_label].nunique() == 1:
+        if target.nunique() == 1:
             return (
                 False,
                 dataframe,
@@ -235,7 +230,9 @@ class DecisionTree:
             )
         return True, dataframe, " [IN] --> Valid dataframe"
 
-    def _build_tree(self, dataframe: pd.DataFrame, max_depth: int) -> dict:
+    def _build_tree(
+        self, dataframe: pd.DataFrame, target: pd.Series, max_depth: int
+    ) -> dict:
         """This function builds the decision tree
 
         This function builds the decision tree by recursively calling itself
@@ -257,7 +254,7 @@ class DecisionTree:
 
         # validate the dataframe
         validation, validation_dataframe, validation_message = self._validate_dataframe(
-            dataframe, max_depth
+            dataframe, target, max_depth
         )
 
         # if the dataframe is not valid then it's a leaf and compute its value.
@@ -266,7 +263,7 @@ class DecisionTree:
                 logging.debug(validation_message)
             if validation_dataframe is None:
                 return {}
-            return self._compute_leaf_value(dataframe[self._target_label])
+            return self._compute_leaf_value(target)
 
         # get the best split
         (
@@ -274,13 +271,13 @@ class DecisionTree:
             split_value,
             split_info_gain,
             split_is_categorical,
-        ) = get_best_split(dataframe, self._target_label, self.verbose)
+        ) = get_best_split(dataframe, target, self.verbose)
 
         # Is the information gain termination gain is met ?
         if split_info_gain is None or split_info_gain < self.min_information_gain:
             if self.verbose:
                 logging.debug(" [OUT] --> Min information gain reached")
-            return self._compute_leaf_value(dataframe[self._target_label])
+            return self._compute_leaf_value(target)
 
         if self.verbose:
             logging.debug(" --> Best split: %s", split_variable)
@@ -289,11 +286,13 @@ class DecisionTree:
             logging.debug(" --> Best split is categorical: %s", split_is_categorical)
 
         # split the dataframe using the variable and its value to two children
-        left_data, right_data = split_data_node(dataframe, split_variable, split_value)
+        left_data, left_target, right_data, right_target = split_data_node(
+            dataframe, target, split_variable, split_value
+        )
 
         # compute the two children subtrees recursively
-        left_response = self._build_tree(left_data, max_depth - 1)
-        right_response = self._build_tree(right_data, max_depth - 1)
+        left_response = self._build_tree(left_data, left_target, max_depth - 1)
+        right_response = self._build_tree(right_data, right_target, max_depth - 1)
 
         # if both children have the same outcome then the current node is a
         # leaf
@@ -367,8 +366,7 @@ class DecisionTree:
             return self._infer_one_entry(sample, decision_tree["left"])
         return self._infer_one_entry(sample, decision_tree["right"])
 
-    @timer
-    def infer_sample(self, dataframe: pd.DataFrame) -> pd.Series:
+    def _predict(self, dataframe: pd.DataFrame) -> pd.Series:
         """This function returns the predictions for a given dataframe
 
         Args:
@@ -384,9 +382,10 @@ class DecisionTree:
 
 def split_data_node(
     dataframe: pd.DataFrame,
+    target: pd.Series,
     split_variable: str,
     split_value: str,  # the split value is not cesea=ssarily a string FIXME
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
     """This function returns the split dataframe based on a variable
 
     Args:
@@ -405,11 +404,11 @@ def split_data_node(
     else:
         split_value = split_value[0]
         mask = dataframe[split_variable] < split_value
-    return dataframe[mask], dataframe[~mask]
+    return dataframe[mask], target[mask], dataframe[~mask], target[~mask]
 
 
 def get_best_split(
-    dataframe: pd.DataFrame, target_name: str, verbose: Optional[bool] = False
+    dataframe: pd.DataFrame, target: pd.Series, verbose: Optional[bool] = False
 ) -> tuple[str, str, float, bool]:
     """This function returns the best split for a given dataframe.
 
@@ -430,11 +429,9 @@ def get_best_split(
             * the best split variable type is categorical
     """
 
-    info_gain_recap = (
-        dataframe.drop(target_name, axis=1)
-        .apply(get_best_split_feature, target=dataframe[target_name], verbose=verbose)
-        .reset_index(drop=True)
-    )
+    info_gain_recap = dataframe.apply(
+        get_best_split_feature, target=target, verbose=verbose
+    ).reset_index(drop=True)
     if info_gain_recap.iloc[-1].sum() == 0:
         return ("", "", -math.inf, False)
 
