@@ -1,11 +1,11 @@
 """ This module implements the bagging algorithm for Classification
 and Regression.
 """
-
-from abc_models.models import SupervisedTabularDataModel
+from typing import List, Type
+import pandas as pd
 import numpy as np
 
-from typing import List
+from abc_models.models import SupervisedTabularDataModel, STMT
 
 
 class GenericBagging(SupervisedTabularDataModel):
@@ -17,7 +17,11 @@ class GenericBagging(SupervisedTabularDataModel):
     """
 
     def __init__(
-        self, model, n_estimators=10, max_samples=0.5, max_features=1.0
+        self,
+        model: STMT,
+        n_estimators: int = 10,
+        max_samples: float = 0.5,
+        max_features: float = 1.0,
     ) -> None:
         """Constructor of the class
 
@@ -34,45 +38,45 @@ class GenericBagging(SupervisedTabularDataModel):
         self.n_estimators = n_estimators
         self.max_samples = max_samples
         self.max_features = max_features
-        self.estimators: List[type[model]] = []
+        self.estimators: List[STMT] = []
 
-    def _fit(self, X, y):
+    def _fit(self, dataframe: pd.DataFrame, target: pd.Series) -> "GenericBagging":
         """Fit the model
 
         Args:
-            X (np.array): features
-            y (np.array): target
+            dataframe (np.array): features
+            target (np.array): target
         """
 
         for _ in range(self.n_estimators):
             # bootstrap samples
 
-            X_sample = X.sample(frac=self.max_samples)
-            y_sample = y[X_sample.index]
+            dataframe_sample = dataframe.sample(frac=self.max_samples)
+            target_sample = target[dataframe_sample.index]
 
             # fit model
             estimator = self.model
-            estimator.fit(X_sample, y_sample)
+            estimator = estimator.fit(dataframe=dataframe_sample, target=target_sample)
             self.estimators.append(estimator)
         return self
 
-    def _predict(self, X):
+    def _predict(self, dataframe: pd.DataFrame) -> np.Series:
         """Predict using the model
 
         Args:
-            X (np.array): features
+            dataframe (np.ndarray): features
 
         Returns:
-            np.array: predictions
+            np.ndarray: predictions
         """
-        predictions = np.zeros((X.shape[0], len(self.estimators)))
+        predictions = np.zeros((dataframe.shape[0], len(self.estimators)))
         for i, estimator in enumerate(self.estimators):
-            predictions[:, i] = estimator.predict(X)
+            predictions[:, i] = estimator.predict(dataframe)
         predictions = pd.DataFrame(predictions)
         mode = predictions.mode(axis=1)
         return mode
 
-    def score(self, X, y):
+    def score(self, dataframe: pd.DataFrame, target: pd.Series) -> float:
         """Score the model
 
         Args:
@@ -82,4 +86,4 @@ class GenericBagging(SupervisedTabularDataModel):
         Returns:
             float: score
         """
-        return np.mean(self.predict(X) == y)
+        return np.mean(self.predict(dataframe) == target)

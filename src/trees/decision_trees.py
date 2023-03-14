@@ -1,3 +1,4 @@
+# pylint: disable=fixme
 """ This module implements the decision tree algorithm for Classification
 and Regression.
 
@@ -11,8 +12,8 @@ Usage:
     >>> test_set = data.drop(training_set.index)
     >>> decision_tree_params = DecisionTreeParams()
     >>> decision_tree = DecisionTree(decision_tree_params=decision_tree_params, verbose=True)
-    >>> tree = decision_tree.train(data, "Index")
-    >>> predicted_values = decision_tree.infer_sample(test_set)
+    >>> tree = decision_tree.fit(data, "Index")
+    >>> predicted_values = decision_tree.predict(test_set)
 
 Classes:
 --------
@@ -30,6 +31,10 @@ Functions:
     * split_data_node(pd.DataFrame, str, str/float) -> tuple[pd.DataFrame, pd.DataFrame]
         splits the dataframe using the split informations.
 
+Imported Classes:
+-------------------
+    abc_models.models.SupervisedTabularDataModel
+    trees.exceptions.UnsupportedModeError
 Imported Functions:
 -------------------
     compute_information_gain(pd.Series, pd.Series, bool, bool) -> float
@@ -248,6 +253,7 @@ class DecisionTree(SupervisedTabularDataModel):
             dict: decision tree
         """
 
+        # TODO: fix too many local variables error
         if self.verbose:
             logging.debug("Current depth: %s", max_depth)
             logging.debug("Current dataframe shape: %s", dataframe.shape)
