@@ -69,11 +69,14 @@ class GenericBagging(SupervisedTabularDataModel):
         Returns:
             np.ndarray: predictions
         """
-        predictions = np.zeros((dataframe.shape[0], len(self.estimators)))
-        for i, estimator in enumerate(self.estimators):
-            predictions[:, i] = estimator.predict(dataframe)
-        predictions_pd: pd.DataFrame = pd.DataFrame(predictions)
-        mode = predictions_pd.mode(axis=1)
+        predictions = pd.DataFrame(
+            [], columns=[f"estimator {k}" for k in range(1, self.n_estimators + 1)]
+        )
+        for k, estimator in enumerate(self.estimators):
+            prediction = pd.DataFrame(estimator.predict(dataframe))
+            predictions[f"estimator {k+1}"] = prediction
+        mode = predictions.mode(axis=1)
+        mode.columns = ["Predictions"]
         return mode
 
     def score(self, dataframe: pd.DataFrame, target: pd.Series) -> float:

@@ -4,7 +4,7 @@ an abstract class for supervised algorithms.
 
 from abc import ABC, abstractmethod
 
-from typing import TypeVar, Protocol
+from typing import TypeVar
 
 import pandas as pd
 
@@ -43,13 +43,3 @@ class SupervisedTabularDataModel(ABC):
     @abstractmethod
     def _predict(self, dataframe: pd.DataFrame) -> pd.Series:
         pass
-
-
-class SupervisedTabularDataInterface(Protocol):
-    """Generic definition of a supervised tabular algorithm model"""
-
-    def fit(self, dataframe: pd.DataFrame, target: pd.Series) -> None:
-        """Fit the model to the data"""
-
-    def predict(self, dataframe: pd.DataFrame) -> None:
-        """Predict the target values for the given data"""
