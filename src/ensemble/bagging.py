@@ -60,7 +60,7 @@ class GenericBagging(SupervisedTabularDataModel):
             self.estimators.append(estimator)
         return self
 
-    def _predict(self, dataframe: pd.DataFrame) -> np.Series:
+    def _predict(self, dataframe: pd.DataFrame) -> pd.Series:
         """Predict using the model
 
         Args:
