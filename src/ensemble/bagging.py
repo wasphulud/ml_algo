@@ -67,8 +67,8 @@ class GenericBagging(SupervisedTabularDataModel):
 
         return self
 
-    def _intermediate_predict(self, dataframe: pd.DataFrame) -> pd.Series:
-        """Predict using the model
+    def _intermediate_predictions(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+        """predictions from all the estiamtors
 
         Args:
             dataframe (np.ndarray): features
@@ -93,8 +93,7 @@ class GenericBagging(SupervisedTabularDataModel):
         Returns:
             np.ndarray: predictions
         """
-        predictions = self._intermediate_predict(dataframe)
-        print(predictions)
+        predictions = self._intermediate_predictions(dataframe)
         mode = predictions.mode(axis=1)
         mode = mode[[0]]  # keep first column
         mode.columns = ["Predictions"]
@@ -108,7 +107,8 @@ class GenericBagging(SupervisedTabularDataModel):
             raise ValueError(
                 f"{self.__class__.__name__} must be fit before calling predict"
             )
-        predictions = self._intermediate_predict(dataframe)
+        predictions = self._intermediate_predictions(dataframe)
+        # for each estimator, compute the prediction using all the previous estimators
         modes = [
             predictions.iloc[:, :k].mode(axis=1)[0]
             for k in range(1, len(predictions.columns) + 1)
