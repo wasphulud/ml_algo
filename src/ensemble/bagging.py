@@ -8,7 +8,7 @@ import numpy as np
 
 
 from abc_models.models import SupervisedTabularDataModel, STMT
-from trees.decorators import timer
+from common.decorators import timer
 
 
 class GenericBagging(SupervisedTabularDataModel):
@@ -25,7 +25,7 @@ class GenericBagging(SupervisedTabularDataModel):
         n_estimators: int = 10,
         max_samples: float = 0.5,
         max_features: float = 1.0,
-        num_workers: int = 1,
+        num_processes: int = 1,
     ) -> None:
         """Constructor of the class
 
@@ -42,7 +42,7 @@ class GenericBagging(SupervisedTabularDataModel):
         self.n_estimators = n_estimators
         self.max_samples = max_samples
         self.max_features = max_features
-        self.num_workers = num_workers
+        self.num_processes = num_processes
         self.estimators: List[STMT] = []
 
     @timer
@@ -62,7 +62,7 @@ class GenericBagging(SupervisedTabularDataModel):
             work.append([dataframe_sample, target_sample])
 
         # Synchronous Pool Context that will close automatically after use
-        with Pool(self.num_workers) as pool:
+        with Pool(self.num_processes) as pool:
             self.estimators = pool.starmap(self.model.fit, work)
 
         return self

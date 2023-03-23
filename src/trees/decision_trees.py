@@ -69,9 +69,9 @@ import numpy as np
 
 from abc_models.models import SupervisedTabularDataModel
 from trees.purity_measurements import compute_information_gain
-
-# from trees.decorators import timer
 from trees.exceptions import UnsupportedModeError
+
+# from common.decorators import timer
 
 
 @dataclass

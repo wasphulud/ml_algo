@@ -1,4 +1,4 @@
-"""Decorators for the decision tree module"""
+"""Decorators for the repo"""
 
 import functools
 import time

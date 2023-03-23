@@ -73,14 +73,11 @@ def main(args: list[Any]) -> None:
             frac=0.8, random_state=42
         )  # pylint: disable=maybe-no-member
         test_set = data.drop(training_set.index)  # pylint: disable=maybe-no-member
-        decision_tree.train(training_set, arguments["target_label"])
+        decision_tree.fit(training_set, arguments["target_label"])
         logging.info(
             "The model accuracy is: %.2f%%",
             sum(
-                (
-                    test_set[arguments["target_label"]]
-                    == decision_tree.infer_sample(test_set)
-                )
+                (test_set[arguments["target_label"]] == decision_tree.predict(test_set))
                 / len(test_set)
             )
             * 100,
