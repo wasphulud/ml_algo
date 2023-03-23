@@ -67,7 +67,7 @@ class GenericBagging(SupervisedTabularDataModel):
 
         return self
 
-    def _predict(self, dataframe: pd.DataFrame) -> pd.Series:
+    def _intermediate_predict(self, dataframe: pd.DataFrame) -> pd.Series:
         """Predict using the model
 
         Args:
@@ -82,19 +82,39 @@ class GenericBagging(SupervisedTabularDataModel):
         for k, estimator in enumerate(self.estimators):
             prediction = pd.DataFrame(estimator.predict(dataframe))
             predictions[f"estimator {k+1}"] = prediction
+        return predictions
+
+    def _predict(self, dataframe: pd.DataFrame) -> pd.Series:
+        """Predict using the model
+
+        Args:
+            dataframe (np.ndarray): features
+
+        Returns:
+            np.ndarray: predictions
+        """
+        predictions = self._intermediate_predict(dataframe)
+        print(predictions)
         mode = predictions.mode(axis=1)
         mode = mode[[0]]  # keep first column
         mode.columns = ["Predictions"]
-        return mode
+        return mode.squeeze()
 
-    def score(self, dataframe: pd.DataFrame, target: pd.Series) -> float:
-        """Score the model
-
-        Args:
-            X (np.array): features
-            y (np.array): target
-
-        Returns:
-            float: score
+    def cumaccuracy(self, dataframe: pd.DataFrame, target: pd.Series) -> List[float]:
+        """Compute the cumulative accuracy of the model
+        using the predictions of the k-first estimators
         """
-        return np.mean(self.predict(dataframe) == target)
+        if not self._is_fitted:
+            raise ValueError(
+                f"{self.__class__.__name__} must be fit before calling predict"
+            )
+        predictions = self._intermediate_predict(dataframe)
+        modes = [
+            predictions.iloc[:, :k].mode(axis=1)[0]
+            for k in range(1, len(predictions.columns) + 1)
+        ]
+        accuracies = [
+            float(f"{sum((target == mode) / len(target)) * 100:.2f}") for mode in modes
+        ]
+
+        return accuracies

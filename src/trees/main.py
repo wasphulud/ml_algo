@@ -70,18 +70,22 @@ def main(args: list[Any]) -> None:
                 f"preprocess argument not recognized {arguments['preprocess']}"
             )
         training_set = data.sample(
-            frac=0.8, random_state=42
+            frac=0.4, random_state=42
         )  # pylint: disable=maybe-no-member
         test_set = data.drop(training_set.index)  # pylint: disable=maybe-no-member
-        decision_tree.fit(training_set, arguments["target_label"])
+        decision_tree.fit(
+            training_set.drop(arguments["target_label"], axis=1),
+            training_set[arguments["target_label"]],
+        )
         logging.info(
             "The model accuracy is: %.2f%%",
-            sum(
-                (test_set[arguments["target_label"]] == decision_tree.predict(test_set))
-                / len(test_set)
-            )
-            * 100,
+            decision_tree.accuracy(test_set, test_set[arguments["target_label"]]),
         )
+        if arguments["mode"] == "classification":
+            logging.info(
+                "Binary Classification Report \n%s",
+                decision_tree.report(test_set, test_set[arguments["target_label"]]),
+            )
     else:
         logging.info("No csv file provided")
     logging.info("Goodbye!")

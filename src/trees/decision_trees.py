@@ -188,7 +188,6 @@ class DecisionTree(SupervisedTabularDataModel):
         Returns:
             dict: The decision tree
         """
-
         target_label = target.name
         self._init_target_label(target_label)
         self._cast_target_label(target)
