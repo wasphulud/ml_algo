@@ -1,10 +1,10 @@
 """ This module implements the bagging algorithm for Classification
 and Regression.
 """
+from multiprocessing import Pool
 from typing import List
 import pandas as pd
 import numpy as np
-from multiprocessing import Pool
 
 
 from abc_models.models import SupervisedTabularDataModel, STMT
