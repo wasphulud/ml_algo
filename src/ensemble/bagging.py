@@ -60,6 +60,8 @@ class GenericBagging(SupervisedTabularDataModel):
             dataframe_sample = dataframe.sample(frac=self.max_samples)
             target_sample = target[dataframe_sample.index]
             work.append([dataframe_sample, target_sample])
+
+        # Synchronous Pool Context that will close automatically after use
         with Pool(self.num_workers) as pool:
             self.estimators = pool.starmap(self.model.fit, work)
 
