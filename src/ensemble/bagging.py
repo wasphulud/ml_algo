@@ -4,8 +4,11 @@ and Regression.
 from typing import List
 import pandas as pd
 import numpy as np
+from multiprocessing import Pool
+
 
 from abc_models.models import SupervisedTabularDataModel, STMT
+from trees.decorators import timer
 
 
 class GenericBagging(SupervisedTabularDataModel):
@@ -22,6 +25,7 @@ class GenericBagging(SupervisedTabularDataModel):
         n_estimators: int = 10,
         max_samples: float = 0.5,
         max_features: float = 1.0,
+        num_workers: int = 1,
     ) -> None:
         """Constructor of the class
 
@@ -38,8 +42,10 @@ class GenericBagging(SupervisedTabularDataModel):
         self.n_estimators = n_estimators
         self.max_samples = max_samples
         self.max_features = max_features
+        self.num_workers = num_workers
         self.estimators: List[STMT] = []
 
+    @timer
     def _fit(self, dataframe: pd.DataFrame, target: pd.Series) -> "GenericBagging":
         """Fit the model
 
@@ -47,17 +53,16 @@ class GenericBagging(SupervisedTabularDataModel):
             dataframe (np.array): features
             target (np.array): target
         """
-
+        work = []
         for _ in range(self.n_estimators):
             # bootstrap samples
 
             dataframe_sample = dataframe.sample(frac=self.max_samples)
             target_sample = target[dataframe_sample.index]
+            work.append([dataframe_sample, target_sample])
+        with Pool(self.num_workers) as pool:
+            self.estimators = pool.starmap(self.model.fit, work)
 
-            # fit model
-            estimator = self.model
-            estimator = estimator.fit(dataframe=dataframe_sample, target=target_sample)
-            self.estimators.append(estimator)
         return self
 
     def _predict(self, dataframe: pd.DataFrame) -> pd.Series:
@@ -76,6 +81,7 @@ class GenericBagging(SupervisedTabularDataModel):
             prediction = pd.DataFrame(estimator.predict(dataframe))
             predictions[f"estimator {k+1}"] = prediction
         mode = predictions.mode(axis=1)
+        mode = mode[[0]]  # keep first column
         mode.columns = ["Predictions"]
         return mode
 

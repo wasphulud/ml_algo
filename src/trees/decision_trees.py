@@ -69,7 +69,8 @@ import numpy as np
 
 from abc_models.models import SupervisedTabularDataModel
 from trees.purity_measurements import compute_information_gain
-from trees.decorators import timer
+
+# from trees.decorators import timer
 from trees.exceptions import UnsupportedModeError
 
 
@@ -176,7 +177,7 @@ class DecisionTree(SupervisedTabularDataModel):
             )
         target = target.astype("float32")
 
-    @timer
+    # @timer
     def _fit(self, dataframe: pd.DataFrame, target: pd.Series) -> "DecisionTree":
         """This method trains the decision tree using the input dataframe.
 
