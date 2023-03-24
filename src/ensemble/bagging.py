@@ -67,6 +67,19 @@ class GenericBagging(SupervisedTabularDataModel):
 
         return self
 
+    def _single_estimator_prediction(
+        self, estimator: STMT, dataframe: pd.DataFrame
+    ) -> pd.Series:
+        """Predict using the model
+
+        Args:
+            dataframe (np.ndarray): features
+
+        Returns:
+            np.ndarray: predictions
+        """
+        return estimator.predict(dataframe)
+
     def _intermediate_predictions(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """predictions from all the estiamtors
 
@@ -79,8 +92,13 @@ class GenericBagging(SupervisedTabularDataModel):
         predictions = pd.DataFrame(
             [], columns=[f"estimator {k}" for k in range(1, self.n_estimators + 1)]
         )
-        for k, estimator in enumerate(self.estimators):
-            prediction = pd.DataFrame(estimator.predict(dataframe))
+        work = map(lambda model: [model, dataframe], self.estimators)
+        with Pool(self.num_processes) as pool:
+            predictions_list = pool.starmap(
+                self._single_estimator_prediction, list(work)
+            )
+
+        for k, prediction in enumerate(predictions_list):
             predictions[f"estimator {k+1}"] = prediction
         return predictions
 
@@ -99,6 +117,7 @@ class GenericBagging(SupervisedTabularDataModel):
         mode.columns = ["Predictions"]
         return mode.squeeze()
 
+    @timer
     def cumaccuracy(self, dataframe: pd.DataFrame, target: pd.Series) -> List[float]:
         """Compute the cumulative accuracy of the model
         using the predictions of the k-first estimators
