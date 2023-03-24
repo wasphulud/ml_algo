@@ -101,6 +101,7 @@ class MaxMarginClassifier(SupervisedTabularDataModel):
     weights: np.ndarray = np.array([])
     support_vectors: np.ndarray = np.array([])
     intercept: float = 0
+    epsilon_clip: float = 1e-6
 
     def _fit(self, dataframe: np.ndarray, target: np.ndarray) -> "MaxMarginClassifier":
         """training the MMC model
@@ -155,12 +156,11 @@ class MaxMarginClassifier(SupervisedTabularDataModel):
         # get the optimal alpha
         self.alpha = optimization_result.x
         self.weights = np.dot(self.alpha * target, dataframe)
-        epsilon = 1e-6
         #  alpha is sparse and strong duality means is alpha > 0 then yi(<weights, xi> +b) = 1
         # if yi(<weights, xi> +b) > 1 the distance of xi to the hyperplan is
         # larger than the margin.
-        self.support_vectors = dataframe[self.alpha > epsilon]
-        support_labels = target[self.alpha > epsilon]
+        self.support_vectors = dataframe[self.alpha > self.epsilon_clip]
+        support_labels = target[self.alpha > self.epsilon_clip]
 
         # using a support vector x with target y: b = target - <weights, x>
         self.intercept = support_labels[0] - np.matmul(
