@@ -9,7 +9,7 @@ import numpy as np
 from abc_models.models import SupervisedTabularDataModel
 
 
-class naiveSVC(SupervisedTabularDataModel):
+class NaiveSVC(SupervisedTabularDataModel):
     """Implementation of the SVC algorithm
 
     TODO: implement the kernel trick
@@ -33,7 +33,7 @@ class naiveSVC(SupervisedTabularDataModel):
         self.weights = np.zeros(data.shape[1])
         self.bias = 0
 
-    def _fit(self, dataframe: np.ndarray, target: np.ndarray) -> "naiveSVC":
+    def _fit(self, dataframe: np.ndarray, target: np.ndarray) -> "NaiveSVC":
         """_summary_
 
         Args:
@@ -101,14 +101,12 @@ class GenericSVM(SupervisedTabularDataModel):
     alpha: np.ndarray = np.array([])
     weights: np.ndarray = np.array([])
     support_vectors: np.ndarray = np.array([])
+    support_labels: np.ndarray = np.array([])
     intercept: float = 0
     epsilon_clip: float = 1e-6
     budget: int = 1
     dataframe: np.ndarray = np.array([])
     target: np.ndarray = np.array([])
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def _fit(self, dataframe: np.ndarray, target: np.ndarray) -> "GenericSVM":
         """training the MMC model
@@ -167,7 +165,7 @@ class GenericSVM(SupervisedTabularDataModel):
         """Predict y value in {-1, 1}"""
         return 2 * (np.matmul(dataframe, self.weights) > 0) - 1
 
-    def compute_support_vectors(self):
+    def compute_support_vectors(self) -> None:
         """This method computes the support vectors and their labels"""
         self.support_vectors = self.dataframe[self.alpha > self.epsilon_clip]
         self.support_labels = self.target[self.alpha > self.epsilon_clip]
@@ -182,7 +180,7 @@ class GenericSVM(SupervisedTabularDataModel):
         """define the partial derivative of the objective function on alpha"""
         return np.ones_like(alpha) - np.dot(alpha, gram)
 
-    def compute_intercept(self):
+    def compute_intercept(self) -> None:
         """This function computes the hyperplan intercept"""
 
         # using a support vector x with target y: b = target - <weights, x>
@@ -264,7 +262,8 @@ class SVC(GenericSVM):
         """Implementation of the intercept for SVC"""
         # using a support vector x with target y: b = target - <weights, x>
         # we typically use an average of all the solutions for numerical stability
-        # we use point that are leaning on the margin thus, their alpha are equal to the budget
+        # we use point that are leaning on the margin thus, their alpha are
+        # equal to the budget
 
         vectors = self.dataframe[
             (self.alpha > self.epsilon_clip) & (self.alpha < self.budget)
@@ -273,6 +272,7 @@ class SVC(GenericSVM):
             (self.alpha > self.epsilon_clip) & (self.alpha < self.budget)
         ]
         # using a support vector x with target y: b = target - <weights, x>
-        # we typically use an average of all the solutions for numerical stability
+        # we typically use an average of all the solutions for numerical
+        # stability
 
         self.intercept = (labels - np.matmul(vectors, self.weights)).mean()
