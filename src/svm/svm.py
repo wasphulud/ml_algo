@@ -168,6 +168,7 @@ class GenericSVM(SupervisedTabularDataModel):
         return 2 * (np.matmul(dataframe, self.weights) > 0) - 1
 
     def compute_support_vectors(self):
+        """This method computes the support vectors and their labels"""
         self.support_vectors = self.dataframe[self.alpha > self.epsilon_clip]
         self.support_labels = self.target[self.alpha > self.epsilon_clip]
 
@@ -182,6 +183,8 @@ class GenericSVM(SupervisedTabularDataModel):
         return np.ones_like(alpha) - np.dot(alpha, gram)
 
     def compute_intercept(self):
+        """This function computes the hyperplan intercept"""
+
         # using a support vector x with target y: b = target - <weights, x>
         # we typically use an average of all the solutions for numericalstability
         # for max margin classifier, the distrubution are separable thus we can
@@ -201,7 +204,6 @@ class GenericSVM(SupervisedTabularDataModel):
         Returns:
             tuple: _description_
         """
-        pass
 
 
 class MaxMarginClassifier(GenericSVM):
@@ -259,6 +261,7 @@ class SVC(GenericSVM):
         return cons
 
     def compute_intercept(self):
+        """Implementation of the intercept for SVC"""
         # using a support vector x with target y: b = target - <weights, x>
         # we typically use an average of all the solutions for numerical stability
         # we use point that are leaning on the margin thus, their alpha are equal to the budget
