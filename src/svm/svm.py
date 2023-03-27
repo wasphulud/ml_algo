@@ -131,9 +131,10 @@ class MaxMarginClassifier(SupervisedTabularDataModel):
         )
 
         # constrains on alpha
-        # alpha >= 0
+        # f(alpha) >= 0
         # <alpha, x> = 0
-        identity_matrix = np.eye(len(target))
+        function_alpha = -np.eye(len(target))
+        constants = np.zeros(len(target))
 
         cons = (
             {
@@ -141,7 +142,11 @@ class MaxMarginClassifier(SupervisedTabularDataModel):
                 "fun": lambda a: self.constraint(a, target),
                 "jac": lambda a: target,
             },
-            {"type": "ineq", "fun": lambda a: a, "jac": lambda a: identity_matrix},
+            {
+                "type": "ineq",
+                "fun": lambda a: constants - np.dot(function_alpha, a),
+                "jac": lambda a: -function_alpha,
+            },
         )
 
         # maximize by minimizing the opposite
