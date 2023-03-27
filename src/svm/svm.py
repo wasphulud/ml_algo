@@ -103,6 +103,9 @@ class GenericSVM(SupervisedTabularDataModel):
     support_vectors: np.ndarray = np.array([])
     intercept: float = 0
     epsilon_clip: float = 1e-6
+    budget: int = 1
+    dataframe: np.ndarray = np.array([])
+    target: np.ndarray = np.array([])
 
     def __init__(self) -> None:
         super().__init__()
@@ -130,6 +133,9 @@ class GenericSVM(SupervisedTabularDataModel):
 
         # create the gram matrix
         # Gram_XY = (X.Y) * transpose(X.Y)
+        self.dataframe = dataframe
+        self.target = target
+
         gram_datay = np.dot(
             dataframe * target[:, np.newaxis], (dataframe * target[:, np.newaxis]).T
         )
@@ -152,21 +158,18 @@ class GenericSVM(SupervisedTabularDataModel):
         #  alpha is sparse and strong duality means is alpha > 0 then yi(<weights, xi> +b) = 1
         # if yi(<weights, xi> +b) > 1 the distance of xi to the hyperplan is
         # larger than the margin.
-        self.support_vectors = dataframe[self.alpha > self.epsilon_clip]
-        support_labels = target[self.alpha > self.epsilon_clip]
-
-        # using a support vector x with target y: b = target - <weights, x>
-        # we typically use an average of all the solutions for numericalstability
-
-        self.intercept = (
-            support_labels - np.matmul(self.support_vectors, self.weights)
-        ).mean()
+        self.compute_support_vectors()
+        self.compute_intercept()
 
         return self
 
     def _predict(self, dataframe: np.ndarray) -> np.ndarray:
         """Predict y value in {-1, 1}"""
         return 2 * (np.matmul(dataframe, self.weights) > 0) - 1
+
+    def compute_support_vectors(self):
+        self.support_vectors = self.dataframe[self.alpha > self.epsilon_clip]
+        self.support_labels = self.target[self.alpha > self.epsilon_clip]
 
     @staticmethod
     def objective(gram: np.ndarray, alpha: np.ndarray) -> float:
@@ -177,6 +180,16 @@ class GenericSVM(SupervisedTabularDataModel):
     def objective_derivative(gram: np.ndarray, alpha: np.ndarray) -> float:
         """define the partial derivative of the objective function on alpha"""
         return np.ones_like(alpha) - np.dot(alpha, gram)
+
+    def compute_intercept(self):
+        # using a support vector x with target y: b = target - <weights, x>
+        # we typically use an average of all the solutions for numericalstability
+        # for max margin classifier, the distrubution are separable thus we can
+        # choose any support vector or average on all of them
+
+        self.intercept = (
+            self.support_labels - np.matmul(self.support_vectors, self.weights)
+        ).mean()
 
     @abstractmethod
     def constraints(self, target: np.ndarray) -> tuple:
@@ -244,3 +257,19 @@ class SVC(GenericSVM):
             },
         )
         return cons
+
+    def compute_intercept(self):
+        # using a support vector x with target y: b = target - <weights, x>
+        # we typically use an average of all the solutions for numerical stability
+        # we use point that are leaning on the margin thus, their alpha are equal to the budget
+
+        vectors = self.dataframe[
+            (self.alpha > self.epsilon_clip) & (self.alpha < self.budget)
+        ]
+        labels = self.target[
+            (self.alpha > self.epsilon_clip) & (self.alpha < self.budget)
+        ]
+        # using a support vector x with target y: b = target - <weights, x>
+        # we typically use an average of all the solutions for numerical stability
+
+        self.intercept = (labels - np.matmul(vectors, self.weights)).mean()
