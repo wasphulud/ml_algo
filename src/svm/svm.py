@@ -1,5 +1,6 @@
 """ This module contains the implementation of the SVM algorithm. """
 
+from abc import abstractmethod
 
 from sklearn.utils import shuffle
 from scipy.optimize import minimize
@@ -8,7 +9,7 @@ import numpy as np
 from abc_models.models import SupervisedTabularDataModel
 
 
-class SVC(SupervisedTabularDataModel):
+class naiveSVC(SupervisedTabularDataModel):
     """Implementation of the SVC algorithm
 
     TODO: implement the kernel trick
@@ -32,7 +33,7 @@ class SVC(SupervisedTabularDataModel):
         self.weights = np.zeros(data.shape[1])
         self.bias = 0
 
-    def _fit(self, dataframe: np.ndarray, target: np.ndarray) -> "SVC":
+    def _fit(self, dataframe: np.ndarray, target: np.ndarray) -> "naiveSVC":
         """_summary_
 
         Args:
@@ -94,8 +95,8 @@ class SVC(SupervisedTabularDataModel):
         return gradient_w, gradient_b
 
 
-class MaxMarginClassifier(SupervisedTabularDataModel):
-    """Implementation of the Max Margin Classifier algorithm"""
+class GenericSVM(SupervisedTabularDataModel):
+    """Generic implementation of SVM algorithm family"""
 
     alpha: np.ndarray = np.array([])
     weights: np.ndarray = np.array([])
@@ -103,7 +104,10 @@ class MaxMarginClassifier(SupervisedTabularDataModel):
     intercept: float = 0
     epsilon_clip: float = 1e-6
 
-    def _fit(self, dataframe: np.ndarray, target: np.ndarray) -> "MaxMarginClassifier":
+    def __init__(self) -> None:
+        super().__init__()
+
+    def _fit(self, dataframe: np.ndarray, target: np.ndarray) -> "GenericSVM":
         """training the MMC model
 
         Args:
@@ -131,23 +135,7 @@ class MaxMarginClassifier(SupervisedTabularDataModel):
         )
 
         # constrains on alpha
-        # f(alpha) >= 0
-        # <alpha, x> = 0
-        function_alpha = -np.eye(len(target))
-        constants = np.zeros(len(target))
-
-        cons = (
-            {
-                "type": "eq",
-                "fun": lambda a: self.constraint(a, target),
-                "jac": lambda a: target,
-            },
-            {
-                "type": "ineq",
-                "fun": lambda a: constants - np.dot(function_alpha, a),
-                "jac": lambda a: -function_alpha,
-            },
-        )
+        cons = self.constraints(target)
 
         # maximize by minimizing the opposite
         optimization_result = minimize(
@@ -168,9 +156,11 @@ class MaxMarginClassifier(SupervisedTabularDataModel):
         support_labels = target[self.alpha > self.epsilon_clip]
 
         # using a support vector x with target y: b = target - <weights, x>
-        self.intercept = support_labels[0] - np.matmul(
-            self.support_vectors[0], self.weights
-        )
+        # we typically use an average of all the solutions for numericalstability
+
+        self.intercept = (
+            support_labels - np.matmul(self.support_vectors, self.weights)
+        ).mean()
 
         return self
 
@@ -188,7 +178,69 @@ class MaxMarginClassifier(SupervisedTabularDataModel):
         """define the partial derivative of the objective function on alpha"""
         return np.ones_like(alpha) - np.dot(alpha, gram)
 
-    @staticmethod
-    def constraint(alpha: np.ndarray, target: np.ndarray) -> float:
+    @abstractmethod
+    def constraints(self, target: np.ndarray) -> tuple:
+        """placeholder to define the constraints
+
+        Args:
+            target (np.ndarray): _description_
+
+        Returns:
+            tuple: _description_
+        """
+        pass
+
+
+class MaxMarginClassifier(GenericSVM):
+    """Implements the Max Margin Classifier algorithm"""
+
+    def constraints(self, target: np.ndarray) -> tuple:
         """constraints"""
-        return np.dot(alpha, target)
+        # f(alpha) >= 0
+        # <alpha, x> = 0
+        function_alpha = -np.eye(len(target))
+        constants = np.zeros(len(target))
+
+        cons = (
+            {
+                "type": "eq",
+                "fun": lambda a: np.dot(a, target),
+                "jac": lambda a: target,
+            },
+            {
+                "type": "ineq",
+                "fun": lambda a: constants - np.dot(function_alpha, a),
+                "jac": lambda a: -function_alpha,
+            },
+        )
+        return cons
+
+
+class SVC(GenericSVM):
+    """Implements the Support Vector Classifier algorithm"""
+
+    def __init__(self, budget: int = 1) -> None:
+        super().__init__()
+        self.budget = budget
+
+    def constraints(self, target: np.ndarray) -> tuple:
+        """constraints"""
+        # f(alpha) >= 0
+        # <alpha, x> = 0
+        ndim = len(target)
+        function_alpha = np.vstack((-np.eye(ndim), np.eye(ndim)))
+        constants = np.hstack((np.zeros(ndim), self.budget * np.ones(ndim)))
+
+        cons = (
+            {
+                "type": "eq",
+                "fun": lambda a: np.dot(a, target),
+                "jac": lambda a: target,
+            },
+            {
+                "type": "ineq",
+                "fun": lambda a: constants - np.dot(function_alpha, a),
+                "jac": lambda a: -1 * function_alpha,
+            },
+        )
+        return cons
