@@ -109,6 +109,7 @@ class GenericSVM(SupervisedTabularDataModel):
     target: np.ndarray = np.array([])
     kernel: str = "linear"
     support_yalphas: np.ndarray = np.array([])
+    gamma: float = 1
 
     def _fit(self, dataframe: np.ndarray, target: np.ndarray) -> "GenericSVM":
         """training the MMC model
@@ -181,9 +182,11 @@ class GenericSVM(SupervisedTabularDataModel):
         # where f(x) = beta_0 + sum on the support vectors (x_i) of alpha_i * y_i * K(x, x_i)
         def signed_distance(sample: np.ndarray) -> float:
             """This method computes the signed distance"""
+            # h(support_vector, x)
             hsv_x = np.apply_along_axis(
                 lambda s: self.compute_kernel(s, sample), 1, self.support_vectors
             )
+            # h(support_vector, x) * y * alpha
             hsv_x_yalpha = hsv_x * self.support_yalphas
             return np.sum(hsv_x_yalpha)
 
@@ -205,9 +208,9 @@ class GenericSVM(SupervisedTabularDataModel):
         """This method computes the kernel function"""
         if self.kernel == "linear":
             return np.dot(sample_xi, sample_xj)
-        elif self.kernel == "rbf":
+        if self.kernel == "rbf":
             diff = sample_xi - sample_xj
-            return np.exp(-np.dot(diff, diff) * len(sample_xi) / 2)
+            return np.exp(-np.dot(diff, diff) * self.gamma)
         raise NotImplementedError
 
     @staticmethod
@@ -285,10 +288,13 @@ class MaxMarginClassifier(GenericSVM):
 class SVC(GenericSVM):
     """Implements the Support Vector Classifier algorithm"""
 
-    def __init__(self, budget: float = 1, kernel: str = "linear") -> None:
+    def __init__(
+        self, budget: float = 1, kernel: str = "linear", gamma: float = 1
+    ) -> None:
         super().__init__()
         self.budget = budget
         self.kernel = kernel
+        self.gamma = gamma
 
     def constraints(self, target: np.ndarray) -> tuple:
         """constraints"""
