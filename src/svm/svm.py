@@ -104,9 +104,11 @@ class GenericSVM(SupervisedTabularDataModel):
     support_labels: np.ndarray = np.array([])
     intercept: float = 0
     epsilon_clip: float = 1e-6
-    budget: int = 1
+    budget: float = np.inf
     dataframe: np.ndarray = np.array([])
     target: np.ndarray = np.array([])
+    kernel: str = "linear"
+    support_yalphas: np.ndarray = np.array([])
 
     def _fit(self, dataframe: np.ndarray, target: np.ndarray) -> "GenericSVM":
         """training the MMC model
@@ -134,9 +136,19 @@ class GenericSVM(SupervisedTabularDataModel):
         self.dataframe = dataframe
         self.target = target
 
-        gram_datay = np.dot(
-            dataframe * target[:, np.newaxis], (dataframe * target[:, np.newaxis]).T
+        # samples dot product
+        hxixj = np.apply_along_axis(
+            lambda x1: np.apply_along_axis(
+                lambda x2: self.compute_kernel(x1, x2), 1, dataframe
+            ),
+            1,
+            dataframe,
         )
+
+        # labels dot product
+        hyiyj = np.matmul(target[:, np.newaxis], target[:, np.newaxis].T)
+        # element-wise product between the samples dot product and the labels dot product
+        gram_datay = hxixj * hyiyj
 
         # constrains on alpha
         cons = self.constraints(target)
@@ -157,18 +169,46 @@ class GenericSVM(SupervisedTabularDataModel):
         # if yi(<weights, xi> +b) > 1 the distance of xi to the hyperplan is
         # larger than the margin.
         self.compute_support_vectors()
-        self.compute_intercept()
+        if self.kernel == "linear":
+            self.compute_intercept()
 
         return self
 
     def _predict(self, dataframe: np.ndarray) -> np.ndarray:
         """Predict y value in {-1, 1}"""
-        return 2 * (np.matmul(dataframe, self.weights) > 0) - 1
+
+        # The solution is sign(f(x))
+        # where f(x) = beta_0 + sum on the support vectors (x_i) of alpha_i * y_i * K(x, x_i)
+        def signed_distance(sample: np.ndarray) -> float:
+            """This method computes the signed distance"""
+            hsv_x = np.apply_along_axis(
+                lambda s: self.compute_kernel(s, sample), 1, self.support_vectors
+            )
+            hsv_x_yalpha = hsv_x * self.support_yalphas
+            return np.sum(hsv_x_yalpha)
+
+        distance = np.apply_along_axis(signed_distance, 1, dataframe)
+        return 2 * (distance > 0) - 1
 
     def compute_support_vectors(self) -> None:
         """This method computes the support vectors and their labels"""
-        self.support_vectors = self.dataframe[self.alpha > self.epsilon_clip]
-        self.support_labels = self.target[self.alpha > self.epsilon_clip]
+        support_indices = self.alpha > self.epsilon_clip
+        self.support_vectors = self.dataframe[support_indices]
+        self.support_labels = self.target[support_indices]
+        self.support_yalphas = (
+            self.target[support_indices] * self.alpha[support_indices]
+        )
+
+    def compute_kernel(
+        self, sample_xi: np.ndarray, sample_xj: np.ndarray
+    ) -> np.ndarray:
+        """This method computes the kernel function"""
+        if self.kernel == "linear":
+            return np.dot(sample_xi, sample_xj)
+        elif self.kernel == "rbf":
+            diff = sample_xi - sample_xj
+            return np.exp(-np.dot(diff, diff) * len(sample_xi) / 2)
+        raise NotImplementedError
 
     @staticmethod
     def objective(gram: np.ndarray, alpha: np.ndarray) -> float:
@@ -184,13 +224,26 @@ class GenericSVM(SupervisedTabularDataModel):
         """This function computes the hyperplan intercept"""
 
         # using a support vector x with target y: b = target - <weights, x>
-        # we typically use an average of all the solutions for numericalstability
-        # for max margin classifier, the distrubution are separable thus we can
-        # choose any support vector or average on all of them
+        # we typically use an average of all the solutions for numerical stability
+        # we use point that are leaning on the margin thus, their alpha are
+        # equal to the budget
 
-        self.intercept = (
-            self.support_labels - np.matmul(self.support_vectors, self.weights)
-        ).mean()
+        vectors = self.dataframe[
+            (self.alpha > self.epsilon_clip) & (self.alpha < self.budget)
+        ]
+        labels = self.target[
+            (self.alpha > self.epsilon_clip) & (self.alpha < self.budget)
+        ]
+        if labels.size == 0:
+            # if no support vector such as alpha < C is found, we use the average of all the
+            # support vectors
+            vectors = self.support_vectors
+            labels = self.support_labels
+        # using a support vector x with target y: b = target - <weights, x>
+        # we typically use an average of all the solutions for numerical
+        # stability
+
+        self.intercept = (labels - np.matmul(vectors, self.weights)).mean()
 
     @abstractmethod
     def constraints(self, target: np.ndarray) -> tuple:
@@ -232,9 +285,10 @@ class MaxMarginClassifier(GenericSVM):
 class SVC(GenericSVM):
     """Implements the Support Vector Classifier algorithm"""
 
-    def __init__(self, budget: int = 1) -> None:
+    def __init__(self, budget: float = 1, kernel: str = "linear") -> None:
         super().__init__()
         self.budget = budget
+        self.kernel = kernel
 
     def constraints(self, target: np.ndarray) -> tuple:
         """constraints"""
@@ -257,22 +311,3 @@ class SVC(GenericSVM):
             },
         )
         return cons
-
-    def compute_intercept(self):
-        """Implementation of the intercept for SVC"""
-        # using a support vector x with target y: b = target - <weights, x>
-        # we typically use an average of all the solutions for numerical stability
-        # we use point that are leaning on the margin thus, their alpha are
-        # equal to the budget
-
-        vectors = self.dataframe[
-            (self.alpha > self.epsilon_clip) & (self.alpha < self.budget)
-        ]
-        labels = self.target[
-            (self.alpha > self.epsilon_clip) & (self.alpha < self.budget)
-        ]
-        # using a support vector x with target y: b = target - <weights, x>
-        # we typically use an average of all the solutions for numerical
-        # stability
-
-        self.intercept = (labels - np.matmul(vectors, self.weights)).mean()
