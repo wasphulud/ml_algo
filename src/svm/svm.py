@@ -1,4 +1,7 @@
-""" This module contains the implementation of the SVM algorithm. """
+""" This module contains the implementation of the SVM algorithm.
+TODO: Add better docstring
+"""
+
 
 from abc import abstractmethod
 
@@ -95,6 +98,7 @@ class NaiveSVC(SupervisedTabularDataModel):
         return gradient_w, gradient_b
 
 
+# TODO: add dataclasses
 class GenericSVM(SupervisedTabularDataModel):
     """Generic implementation of SVM algorithm family"""
 
@@ -166,6 +170,7 @@ class GenericSVM(SupervisedTabularDataModel):
         # get the optimal alpha
         self.alpha = optimization_result.x
         self.weights = np.dot(self.alpha * target, dataframe)
+
         #  alpha is sparse and strong duality means is alpha > 0 then yi(<weights, xi> +b) = 1
         # if yi(<weights, xi> +b) > 1 the distance of xi to the hyperplan is
         # larger than the margin.
