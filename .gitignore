@@ -2,7 +2,7 @@
 visualization.py
 .test_bagging.py
 .test_svm.py
-.test_tree.py
+.test_trees.py
 .vscode/
 # images
 *.png
