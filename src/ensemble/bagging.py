@@ -55,9 +55,14 @@ class GenericBagging(SupervisedTabularDataModel):
             target (np.array): target
         """
         work = []
+        n_samples = dataframe.shape[0]
         for _ in range(self.n_estimators):
             # bootstrap samples
-            dataframe_sample = dataframe.sample(frac=self.max_samples_frac)
+            dataframe_sample = dataframe.sample(
+                frac=self.max_samples_frac, replace=False
+            )
+            dataframe_sample = dataframe_sample.sample(n=n_samples, replace=True)
+
             # bootstrap features
             if self.max_features_frac < 1:
                 dataframe_sample = dataframe_sample.sample(
