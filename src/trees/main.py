@@ -19,6 +19,7 @@ from typing import Any
 
 from trees.cli import parse_args
 from trees.decision_trees import DecisionTree, DecisionTreeParams
+from trees.random_forest import RandomForest
 from trees.read_files import (
     read_csv,
     preprocess_bmi_dataset,
@@ -57,11 +58,24 @@ def main(args: list[Any]) -> None:
         verbose=arguments["verbose"],
     )
 
+    random_forest = RandomForest(
+        decision_tree_params=DecisionTreeParams(
+            max_depth=10,
+            mode=arguments["mode"],
+        ),
+        n_estimators=100,
+        max_samples_frac=0.6,
+        max_features_frac=1,
+        num_processes=10,
+    )
+
     if arguments["csv"]:
         data = read_csv(arguments["csv"])
         # check for the preprocessing if it exists and apply it
         if arguments["preprocess"] == "bmi":
             data = preprocess_bmi_dataset(data, arguments["target_label"])
+            data["Index"] = data["Index"] * 1
+            data["Index"] = data["Index"].astype("bool")
         elif arguments["preprocess"] == "titanic":
             data = preprocess_titanic_dataset(data, arguments["target_label"])
         elif arguments["preprocess"] not in ["", "bmi", "titanic"]:
@@ -70,7 +84,7 @@ def main(args: list[Any]) -> None:
                 f"preprocess argument not recognized {arguments['preprocess']}"
             )
         training_set = data.sample(
-            frac=0.4, random_state=42
+            frac=0.6, random_state=42
         )  # pylint: disable=maybe-no-member
         test_set = data.drop(training_set.index)  # pylint: disable=maybe-no-member
         decision_tree.fit(
@@ -78,14 +92,29 @@ def main(args: list[Any]) -> None:
             training_set[arguments["target_label"]],
         )
         logging.info(
-            "The model accuracy is: %.2f%%",
+            "The decision tree model accuracy is: %.2f%%",
             decision_tree.accuracy(test_set, test_set[arguments["target_label"]]),
         )
         if arguments["mode"] == "classification":
             logging.info(
-                "Binary Classification Report \n%s",
+                "Binary Classification Report for decision tree \n%s",
                 decision_tree.report(test_set, test_set[arguments["target_label"]]),
             )
+        random_forest.fit(
+            training_set.drop(arguments["target_label"], axis=1),
+            training_set[arguments["target_label"]].astype("object"),
+        )
+        logging.info(
+            "The random forest model accuracy is: %.2f%%",
+            random_forest.accuracy(test_set, test_set[arguments["target_label"]]),
+        )
+        if arguments["mode"] == "classification":
+            logging.info(
+                "Binary Classification Report for random forest \n%s",
+                random_forest.report(test_set, test_set[arguments["target_label"]]),
+            )
+        # print(random_forest.cumaccuracy(test_set, test_set[arguments["target_label"]]))
+
     else:
         logging.info("No csv file provided")
     logging.info("Goodbye!")

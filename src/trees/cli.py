@@ -18,7 +18,7 @@ def parse_args(args: list[Any]) -> Namespace:
     parser.add_argument("--csv", type=str)
     parser.add_argument("--preprocess", type=str, default="")
     parser.add_argument("--target_label", type=str)
-    parser.add_argument("--max_depth", type=int, default=5)
+    parser.add_argument("--max_depth", type=int, default=20)
     parser.add_argument("--min_samples_split", type=int, default=10)
     parser.add_argument("--min_information_gain", type=float, default=1e-10)
     parser.add_argument("--mode", type=str, default="classification")

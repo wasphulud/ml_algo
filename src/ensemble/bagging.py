@@ -3,6 +3,7 @@ and Regression.
 """
 from multiprocessing import Pool
 from typing import List
+import copy
 import pandas as pd
 import numpy as np
 
@@ -23,8 +24,8 @@ class GenericBagging(SupervisedTabularDataModel):
         self,
         model: STMT,
         n_estimators: int = 10,
-        max_samples: float = 0.5,
-        max_features: float = 1.0,
+        max_samples_frac: float = 0.5,
+        max_features_frac: float = 1.0,
         num_processes: int = 1,
     ) -> None:
         """Constructor of the class
@@ -40,8 +41,8 @@ class GenericBagging(SupervisedTabularDataModel):
         super().__init__()
         self.model = model
         self.n_estimators = n_estimators
-        self.max_samples = max_samples
-        self.max_features = max_features
+        self.max_samples_frac = max_samples_frac
+        self.max_features_frac = max_features_frac
         self.num_processes = num_processes
         self.estimators: List[STMT] = []
 
@@ -56,14 +57,18 @@ class GenericBagging(SupervisedTabularDataModel):
         work = []
         for _ in range(self.n_estimators):
             # bootstrap samples
-
-            dataframe_sample = dataframe.sample(frac=self.max_samples)
+            dataframe_sample = dataframe.sample(frac=self.max_samples_frac)
+            # bootstrap features
+            if self.max_features_frac < 1:
+                dataframe_sample = dataframe_sample.sample(
+                    frac=self.max_features_frac, axis=1
+                )
             target_sample = target[dataframe_sample.index]
             work.append([dataframe_sample, target_sample])
 
         # Synchronous Pool Context that will close automatically after use
         with Pool(self.num_processes) as pool:
-            self.estimators = pool.starmap(self.model.fit, work)
+            self.estimators = pool.starmap(copy.deepcopy(self.model.fit), work)
 
         return self
 
