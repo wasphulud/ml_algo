@@ -1,7 +1,7 @@
 """ This module implements the bagging algorithm for Classification
 and Regression.
 """
-from multiprocessing import Pool
+# from multiprocessing import Pool
 from typing import List
 import copy
 import pandas as pd
@@ -10,6 +10,7 @@ import numpy as np
 
 from abc_models.models import SupervisedTabularDataModel, STMT
 from common.decorators import timer
+from common.multiprocessing import NestablePool as Pool
 
 
 class GenericBagging(SupervisedTabularDataModel):
