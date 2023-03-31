@@ -60,8 +60,7 @@ def main(args: list[Any]) -> None:
 
     random_forest = RandomForest(
         decision_tree_params=DecisionTreeParams(
-            max_depth=10,
-            mode=arguments["mode"],
+            max_depth=10, mode=arguments["mode"], turn_off_frac=0.3
         ),
         n_estimators=100,
         max_samples_frac=0.8,

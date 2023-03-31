@@ -91,6 +91,7 @@ class DecisionTreeParams:
     min_samples_split: int = 10
     min_information_gain: float = 1e-10
     mode: str = "classification"
+    turn_off_frac: float = 0.0
 
 
 class DecisionTree(SupervisedTabularDataModel):
@@ -123,6 +124,7 @@ class DecisionTree(SupervisedTabularDataModel):
     def __init__(
         self,
         decision_tree_params: DecisionTreeParams = DecisionTreeParams(),
+        turn_off_frac: float = 0,
         verbose: Optional[bool] = False,
     ):
         super().__init__()
@@ -130,6 +132,7 @@ class DecisionTree(SupervisedTabularDataModel):
         self.min_samples_split = decision_tree_params.min_samples_split
         self.min_information_gain = decision_tree_params.min_information_gain
         self.mode = decision_tree_params.mode
+        self.turn_off_frac = decision_tree_params.turn_off_frac
         self._check_mode()  # check if the mode is supported
         self.verbose = verbose
 
@@ -191,7 +194,9 @@ class DecisionTree(SupervisedTabularDataModel):
         target_label = target.name
         self._init_target_label(target_label)
         self._cast_target_label(target)
-        self.tree = self._build_tree(dataframe, target, self.max_depth)
+        self.tree = self._build_tree(
+            dataframe, target, self.max_depth, self.turn_off_frac
+        )
         return self
 
     def _validate_dataframe(
@@ -236,7 +241,11 @@ class DecisionTree(SupervisedTabularDataModel):
         return True, dataframe, " [IN] --> Valid dataframe"
 
     def _build_tree(
-        self, dataframe: pd.DataFrame, target: pd.Series, max_depth: int
+        self,
+        dataframe: pd.DataFrame,
+        target: pd.Series,
+        max_depth: int,
+        turn_off_frac: float = 0,
     ) -> dict:
         """This function builds the decision tree
 
@@ -277,7 +286,7 @@ class DecisionTree(SupervisedTabularDataModel):
             split_value,
             split_info_gain,
             split_is_categorical,
-        ) = get_best_split(dataframe, target, self.verbose)
+        ) = get_best_split(dataframe, target, turn_off_frac, self.verbose)
 
         # Is the information gain termination gain is met ?
         if split_info_gain is None or split_info_gain < self.min_information_gain:
@@ -297,8 +306,12 @@ class DecisionTree(SupervisedTabularDataModel):
         )
 
         # compute the two children subtrees recursively
-        left_response = self._build_tree(left_data, left_target, max_depth - 1)
-        right_response = self._build_tree(right_data, right_target, max_depth - 1)
+        left_response = self._build_tree(
+            left_data, left_target, max_depth - 1, turn_off_frac
+        )
+        right_response = self._build_tree(
+            right_data, right_target, max_depth - 1, turn_off_frac
+        )
 
         # if both children have the same outcome then the current node is a
         # leaf
@@ -414,7 +427,10 @@ def split_data_node(
 
 
 def get_best_split(
-    dataframe: pd.DataFrame, target: pd.Series, verbose: Optional[bool] = False
+    dataframe: pd.DataFrame,
+    target: pd.Series,
+    turn_off_frac: float = 0,
+    verbose: Optional[bool] = False,
 ) -> tuple[str, str, float, bool]:
     """This function returns the best split for a given dataframe.
 
@@ -434,6 +450,8 @@ def get_best_split(
             * the best split information gain value
             * the best split variable type is categorical
     """
+    if turn_off_frac:
+        dataframe = dataframe.sample(frac=1 - turn_off_frac, axis=1)
 
     info_gain_recap = dataframe.apply(
         get_best_split_feature, target=target, verbose=verbose
