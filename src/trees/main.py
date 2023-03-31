@@ -64,7 +64,7 @@ def main(args: list[Any]) -> None:
             mode=arguments["mode"],
         ),
         n_estimators=100,
-        max_samples_frac=0.6,
+        max_samples_frac=0.8,
         max_features_frac=1,
         num_processes=10,
     )
@@ -84,7 +84,7 @@ def main(args: list[Any]) -> None:
                 f"preprocess argument not recognized {arguments['preprocess']}"
             )
         training_set = data.sample(
-            frac=0.6, random_state=42
+            frac=0.8, random_state=None
         )  # pylint: disable=maybe-no-member
         test_set = data.drop(training_set.index)  # pylint: disable=maybe-no-member
         decision_tree.fit(
@@ -113,7 +113,7 @@ def main(args: list[Any]) -> None:
                 "Binary Classification Report for random forest \n%s",
                 random_forest.report(test_set, test_set[arguments["target_label"]]),
             )
-        # print(random_forest.cumaccuracy(test_set, test_set[arguments["target_label"]]))
+        print(random_forest.cumaccuracy(test_set, test_set[arguments["target_label"]]))
 
     else:
         logging.info("No csv file provided")
