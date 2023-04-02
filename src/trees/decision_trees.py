@@ -124,7 +124,6 @@ class DecisionTree(SupervisedTabularDataModel):
     def __init__(
         self,
         decision_tree_params: DecisionTreeParams = DecisionTreeParams(),
-        turn_off_frac: float = 0,
         verbose: Optional[bool] = False,
     ):
         super().__init__()
