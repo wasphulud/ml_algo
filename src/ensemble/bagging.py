@@ -78,8 +78,9 @@ class GenericBagging(SupervisedTabularDataModel):
 
         return self
 
+    @staticmethod
     def _single_estimator_prediction(
-        self, estimator: STMT, dataframe: pd.DataFrame
+        estimator: STMT, dataframe: pd.DataFrame
     ) -> pd.Series:
         """Predict using the model
 
