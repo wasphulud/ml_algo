@@ -1,4 +1,5 @@
 # custom files
+.test_adaboost.py
 visualization.py
 .test_bagging.py
 .test_svm.py
