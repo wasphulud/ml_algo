@@ -42,7 +42,6 @@ class AdaBoost(SupervisedTabularDataModel):
 
     def _fit(self, dataframe: pd.DataFrame, target: pd.Series) -> "AdaBoost":
         n_samples = dataframe.shape[0]
-        print(dataframe.dtypes)
         weights = (
             pd.Series(np.ones(n_samples), index=dataframe.index) / n_samples
         )  # 1- init the weights
@@ -58,14 +57,11 @@ class AdaBoost(SupervisedTabularDataModel):
             estimator.fit(
                 training_dataframe, training_target
             )  # a fit the estimator using the weights
-            err = np.sum(
-                weights * (estimator.predict(training_dataframe) != training_target)
-            ) / np.sum(
+            err = np.sum(weights * (estimator.predict(dataframe) != target)) / np.sum(
                 weights
             )  # b - compute the error
-            if err > 1:
-                err = 1
-            print("err", err)
+
+            # print("err", err)
             alpha = np.log(
                 (1 - err + self.epsilon) / (err + self.epsilon)
             )  # c - compute the alpha
@@ -75,7 +71,6 @@ class AdaBoost(SupervisedTabularDataModel):
             weights = weights * np.exp(
                 alpha * ((estimator.predict(dataframe) != target))
             )  # d - update the weights
-            print(weights)
             weights = weights / np.sum(weights)  # e - normalize the weights
         return self
 
@@ -84,4 +79,5 @@ class AdaBoost(SupervisedTabularDataModel):
         for alpha, estimator in zip(self.alphas, self.estimators):
             current_pred = estimator.predict(dataframe)
             predictions += alpha * current_pred
+        print(self.alphas)
         return np.sign(predictions)
