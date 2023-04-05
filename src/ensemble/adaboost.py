@@ -47,17 +47,13 @@ class AdaBoost(SupervisedTabularDataModel):
             pd.Series(np.ones(n_samples), index=dataframe.index) / n_samples
         )  # 1- init the weights
         for _ in range(self.n_estimators):  # 2 -for each base estimator
-            # print("weights", weights)
             estimator = copy.deepcopy(self.model)
             # print(dataframe.index.shape, weights.shape)
             indices = np.random.choice(
                 dataframe.index, size=n_samples, replace=True, p=weights
             )
             training_dataframe = copy.deepcopy(dataframe.loc[indices])
-            # print(training_dataframe.shape, weights.shape)
             training_target = target[training_dataframe.index]
-            # print(training_dataframe.dtypes)
-            # print(training_dataframe)
             self.estimators.append(estimator)
             estimator.fit(
                 training_dataframe, training_target
@@ -88,5 +84,4 @@ class AdaBoost(SupervisedTabularDataModel):
         for alpha, estimator in zip(self.alphas, self.estimators):
             current_pred = estimator.predict(dataframe)
             predictions += alpha * current_pred
-        print(self.alphas)
         return np.sign(predictions)
