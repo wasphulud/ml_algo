@@ -71,7 +71,7 @@ from abc_models.models import SupervisedTabularDataModel
 from trees.purity_measurements import compute_information_gain
 from trees.exceptions import UnsupportedModeError
 
-# from common.decorators import timer
+from common.decorators import timer
 
 
 @dataclass
@@ -179,7 +179,7 @@ class DecisionTree(SupervisedTabularDataModel):
             )
         target = target.astype("float32")
 
-    # @timer
+    @timer
     def _fit(self, dataframe: pd.DataFrame, target: pd.Series) -> "DecisionTree":
         """This method trains the decision tree using the input dataframe.
 
@@ -485,8 +485,9 @@ def get_best_split_feature(
             * a boolean indicating if the split is valid or not
     """
 
+    assert isinstance(feature, pd.Series), f"Is not a pandas series, {type(feature)}"
     # check if the column's type os categorical
-    is_cat = feature.dtype == "O"
+    is_cat = feature.dtypes == "O"
     if verbose:
         logging.debug("Feature name ---> %s", feature.name)
         logging.debug("Is categorical? ---> %s", feature.dtype == "O")
