@@ -1,7 +1,7 @@
 """ This module implements the adaboost algorithm
 """
 
-from typing import List
+from typing import List, Optional
 import copy
 import pandas as pd
 import numpy as np
@@ -16,6 +16,7 @@ class AdaBoost(SupervisedTabularDataModel):
         self,
         model: STMT,
         n_estimators: int = 10,
+        random_state: Optional[int] = None,
     ) -> None:
         """Constructor of the class
 
@@ -29,8 +30,8 @@ class AdaBoost(SupervisedTabularDataModel):
 
         self.estimators: List[STMT] = []
         self.alphas: List[float] = []
-
         self.epsilon = 1e-5
+        np.random.seed(random_state)
 
     def _init_weights(self, n_samples: int) -> np.ndarray:
         """Initialize the sample weights uniformly.
