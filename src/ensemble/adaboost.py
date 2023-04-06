@@ -90,9 +90,9 @@ class AdaBoost(SupervisedTabularDataModel):
 
     def _fit(self, dataframe: pd.DataFrame, target: pd.Series) -> "AdaBoost":
         n_samples = dataframe.shape[0]
-        weights = self._init_weights(n_samples)
+        weights = self._init_weights(n_samples)  # 1- init the weights
 
-        for _ in range(self.n_estimators):
+        for _ in range(self.n_estimators):  # 2 -for each base estimator
             estimator = copy.deepcopy(self.model)
             indices = np.random.choice(
                 dataframe.index, size=n_samples, replace=True, p=weights
@@ -101,16 +101,22 @@ class AdaBoost(SupervisedTabularDataModel):
             training_dataframe = dataframe.loc[indices]
             training_target = target[indices]
 
-            estimator.fit(training_dataframe, training_target)
+            estimator.fit(
+                training_dataframe, training_target
+            )  # a - fit the estimator using the weights
             predictions = estimator.predict(dataframe)
 
-            err = self._compute_error(weights, predictions, target)
-            alpha = self._compute_alpha(err)
+            err = self._compute_error(
+                weights, predictions, target
+            )  # b - compute the error
+            alpha = self._compute_alpha(err)  # c - compute the alpha
 
             self.estimators.append(estimator)
             self.alphas.append(alpha)
 
-            weights = self._update_weights(weights, alpha, predictions, target)
+            weights = self._update_weights(
+                weights, alpha, predictions, target
+            )  # d - update the weights
 
         return self
 
