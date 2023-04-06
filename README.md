@@ -40,3 +40,7 @@ Here are some ideas for future additions to the repository:
 
 
 We hope you enjoy using AI Artisan to build your machine learning skills from scratch. Happy coding!
+
+# License
+
+AI Artisan is licensed under the MIT License. See the LICENSE file for more information.
