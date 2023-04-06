@@ -16,7 +16,6 @@ class AdaBoost(SupervisedTabularDataModel):
         self,
         model: STMT,
         n_estimators: int = 10,
-        random_state: int = 42,
     ) -> None:
         """Constructor of the class
 
@@ -27,7 +26,6 @@ class AdaBoost(SupervisedTabularDataModel):
         super().__init__()
         self.model = model
         self.n_estimators = n_estimators
-        self.random_state = random_state
 
         self.estimators: List[STMT] = []
         self.alphas: List[float] = []
