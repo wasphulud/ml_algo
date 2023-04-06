@@ -51,7 +51,7 @@ class AdaBoost(SupervisedTabularDataModel):
             indices = np.random.choice(
                 dataframe.index, size=n_samples, replace=True, p=weights
             )
-            training_dataframe = copy.deepcopy(dataframe.loc[indices])
+            training_dataframe = dataframe.loc[indices]
             training_target = target[training_dataframe.index]
             self.estimators.append(estimator)
             estimator.fit(
