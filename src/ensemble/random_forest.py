@@ -2,8 +2,8 @@
 uses decision trees to predict for regression and classification problems. It
 trains multiple decision trees on different subsets of data and combines their
 predictions for a more robust result. It extends GenericBagging, inheriting its
-methods like fit and predict. Requires pandas, ensemble.bagging, and
-trees.decision_trees submodules.
+methods like fit and predict.
+Requires pandas, ensemble.bagging, and trees.decision_trees submodules.
 """
 import pandas as pd
 
