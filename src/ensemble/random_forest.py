@@ -1,8 +1,9 @@
-"""This module implements the RandomForest class which is a type of ensemble model that uses a collection of decision trees to make predictions for both regression and classification problems. This is achieved by training multiple decision trees on different subsets of the training data and combining their predictions to get a more robust result.
-
-This class extends the GenericBagging class and inherits its methods, such as fit and predict, to train and predict the random forest model.
-
-This module requires the pandas and ensemble.bagging and trees.decision_trees submodules to be imported.
+"""This module implements the RandomForest class, which is an ensemble model that
+uses decision trees to predict for regression and classification problems. It
+trains multiple decision trees on different subsets of data and combines their
+predictions for a more robust result. It extends GenericBagging, inheriting its
+methods like fit and predict. Requires pandas, ensemble.bagging, and
+trees.decision_trees submodules.
 """
 import pandas as pd
 
@@ -11,18 +12,24 @@ from trees.decision_trees import DecisionTree, DecisionTreeParams
 
 
 class RandomForest(GenericBagging):
-    """RandomForest model for Classification and Regression
+    """RandomForest model for Classification and Regression:
 
-    This class is an implementation of a random forest ensemble model that combines multiple decision trees to make predictions on classification and regression problems.
-
-    The RandomForest class extends the GenericBagging class and inherits its methods, such as fit and predict, to train and predict the random forest model.
+    This class is an implementation of a random forest ensemble model that combines
+    multiple decision trees to make predictions on classification and regression
+    problems. The RandomForest class extends the GenericBagging class and inherits
+    its methods like fit and predict to train and predict the random forest model.
 
     Args:
-        decision_tree_params (DecisionTreeParams, optional): an object containing hyperparameters for the decision tree. Defaults to DecisionTreeParams().
-        n_estimators (int, optional): number of decision trees in the ensemble. Defaults to 10.
-        max_samples_frac (float, optional): fraction of samples to use when training each decision tree. Defaults to 0.5.
-        max_features_frac (float, optional): fraction of features to use when training each decision tree. Defaults to 1.
-        num_processes (int, optional): number of processes to use when training each decision tree. Defaults to 1.
+        decision_tree_params (DecisionTreeParams, optional): an object containing
+            hyperparameters for the decision tree. Defaults to DecisionTreeParams().
+        n_estimators (int, optional): number of decision trees in the ensemble.
+            Defaults to 10.
+        max_samples_frac (float, optional): fraction of samples to use when training
+            each decision tree. Defaults to 0.5.
+        max_features_frac (float, optional): fraction of features to use when
+            training each decision tree. Defaults to 1.
+        num_processes (int, optional): number of processes to use when training each
+            decision tree. Defaults to 1.
 
     Methods:
         fit(dataframe, target): fit the random forest model to the training data.
