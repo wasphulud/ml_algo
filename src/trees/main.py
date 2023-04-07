@@ -19,7 +19,7 @@ from typing import Any
 
 from trees.cli import parse_args
 from trees.decision_trees import DecisionTree, DecisionTreeParams
-from trees.random_forest import RandomForest
+from ensemble.random_forest import RandomForest
 from trees.read_files import (
     read_csv,
     preprocess_bmi_dataset,

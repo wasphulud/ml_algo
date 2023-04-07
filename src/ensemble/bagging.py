@@ -5,7 +5,6 @@ and Regression.
 from typing import List
 import copy
 import pandas as pd
-import numpy as np
 
 
 from abc_models.models import SupervisedTabularDataModel, STMT
