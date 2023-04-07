@@ -138,7 +138,8 @@ class GenericBagging(SupervisedTabularDataModel):
                 f"{self.__class__.__name__} must be fit before calling predict"
             )
         predictions = self._intermediate_predictions(dataframe)
-        # for each estimator, compute the prediction using all the previous estimators
+        # for each estimator, compute the prediction using all the previous
+        # estimators
         modes = [
             predictions.iloc[:, :k].mode(axis=1)[0]
             for k in range(1, len(predictions.columns) + 1)

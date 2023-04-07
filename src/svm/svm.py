@@ -152,7 +152,8 @@ class GenericSVM(SupervisedTabularDataModel):
 
         # labels dot product
         hyiyj = np.matmul(target[:, np.newaxis], target[:, np.newaxis].T)
-        # element-wise product between the samples dot product and the labels dot product
+        # element-wise product between the samples dot product and the labels
+        # dot product
         gram_datay = hxixj * hyiyj
 
         # constrains on alpha
@@ -184,7 +185,8 @@ class GenericSVM(SupervisedTabularDataModel):
         """Predict y value in {-1, 1}"""
 
         # The solution is sign(f(x))
-        # where f(x) = beta_0 + sum on the support vectors (x_i) of alpha_i * y_i * K(x, x_i)
+        # where f(x) = beta_0 + sum on the support vectors (x_i) of alpha_i *
+        # y_i * K(x, x_i)
         def signed_distance(sample: np.ndarray) -> float:
             """This method computes the signed distance"""
             # h(support_vector, x)
