@@ -397,6 +397,14 @@ class DecisionTree(SupervisedTabularDataModel):
 
         return dataframe.apply(self._infer_one_entry, args=(self.tree,), axis=1)
 
+    def compute_feature_relevance(self):
+        """This function computes the feature relevance for the decision tree.
+
+        Returns:
+            dict: a dictionary containing the feature relevance
+        """
+        # TODO
+
 
 def split_data_node(
     dataframe: pd.DataFrame,
