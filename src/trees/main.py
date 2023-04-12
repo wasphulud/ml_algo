@@ -94,7 +94,10 @@ def main(args: list[Any]) -> None:
             "The decision tree model accuracy is: %.2f%%",
             decision_tree.accuracy(test_set, test_set[arguments["target_label"]]),
         )
-
+        logging.info(
+            "The features importance is is: %s",
+            decision_tree.get_features_relevance,
+        )
         if arguments["mode"] == "classification":
             logging.info(
                 "Binary Classification Report for decision tree \n%s",

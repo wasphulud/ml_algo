@@ -66,6 +66,7 @@ from dataclasses import dataclass
 from typing import Optional
 import pandas as pd
 import numpy as np
+from collections import defaultdict
 
 from abc_models.models import SupervisedTabularDataModel
 from trees.purity_measurements import compute_information_gain
@@ -119,6 +120,7 @@ class DecisionTree(SupervisedTabularDataModel):
 
     tree: dict[str, dict] = {}
     _target_label: str = ""
+    _splits: dict[str, list] = defaultdict(list)
 
     # initialize the class
     def __init__(
@@ -193,6 +195,7 @@ class DecisionTree(SupervisedTabularDataModel):
         target_label = target.name
         self._init_target_label(target_label)
         self._cast_target_label(target)
+        # self._splits = self._splits.fromkeys(list(dataframe.columns), [])
         self.tree = self._build_tree(
             dataframe, target, self.max_depth, self.turn_off_frac
         )
@@ -286,6 +289,7 @@ class DecisionTree(SupervisedTabularDataModel):
             split_info_gain,
             split_is_categorical,
         ) = get_best_split(dataframe, target, turn_off_frac, self.verbose)
+        print(split_variable, split_info_gain)
 
         # Is the information gain termination gain is met ?
         if split_info_gain is None or split_info_gain < self.min_information_gain:
@@ -298,6 +302,9 @@ class DecisionTree(SupervisedTabularDataModel):
             logging.debug(" --> Best split value: %s", split_value)
             logging.debug(" --> Best split info gain: %s", split_info_gain)
             logging.debug(" --> Best split is categorical: %s", split_is_categorical)
+
+        # register the best split
+        self._register_split(split_variable, split_info_gain)
 
         # split the dataframe using the variable and its value to two children
         left_data, left_target, right_data, right_target = split_data_node(
@@ -397,13 +404,34 @@ class DecisionTree(SupervisedTabularDataModel):
 
         return dataframe.apply(self._infer_one_entry, args=(self.tree,), axis=1)
 
-    def compute_feature_relevance(self):
+    def _register_split(self, split_variable: str, split_info_gain: float):
+        """This function registers the split variable and its information gain
+
+        Args:
+            split_variable (str): the split variable
+            split_info_gain (float): the split information gain
+        """
+        self._splits[split_variable].append(split_info_gain)
+
+    @property
+    def get_features_relevance(self) -> dict:
+        """This function returns the feature relevance for the decision tree.
+
+        Returns:
+            dict: a dictionary containing the feature relevance
+        """
+        return self.compute_feature_relevance()
+
+    def compute_feature_relevance(self) -> dict:
         """This function computes the feature relevance for the decision tree.
 
         Returns:
             dict: a dictionary containing the feature relevance
         """
-        # TODO
+        feature_relevance = {}
+        for feature, information_gain in self._splits.items():
+            feature_relevance[feature] = np.sum(information_gain)
+        return feature_relevance
 
 
 def split_data_node(
