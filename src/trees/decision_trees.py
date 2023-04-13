@@ -290,7 +290,6 @@ class DecisionTree(SupervisedTabularDataModel):
             split_info_gain,
             split_is_categorical,
         ) = get_best_split(dataframe, target, turn_off_frac, self.verbose)
-        print(split_variable, split_info_gain)
 
         # Is the information gain termination gain is met ?
         if split_info_gain is None or split_info_gain < self.min_information_gain:
