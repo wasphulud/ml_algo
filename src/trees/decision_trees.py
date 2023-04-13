@@ -196,6 +196,7 @@ class DecisionTree(SupervisedTabularDataModel):
         self._init_target_label(target_label)
         self._cast_target_label(target)
         # self._splits = self._splits.fromkeys(list(dataframe.columns), [])
+        self._splits = defaultdict(list)
         self.tree = self._build_tree(
             dataframe, target, self.max_depth, self.turn_off_frac
         )
@@ -420,9 +421,9 @@ class DecisionTree(SupervisedTabularDataModel):
         Returns:
             dict: a dictionary containing the feature relevance
         """
-        return self.compute_feature_relevance()
+        return self._compute_feature_relevance()
 
-    def compute_feature_relevance(self) -> dict:
+    def _compute_feature_relevance(self) -> dict:
         """This function computes the feature relevance for the decision tree.
 
         Returns:
