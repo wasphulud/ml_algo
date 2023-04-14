@@ -1,5 +1,5 @@
 # custom files
-..test_gbm.py
+.test_gbm.py
 .test_adaboost.py
 visualization.py
 .test_bagging.py

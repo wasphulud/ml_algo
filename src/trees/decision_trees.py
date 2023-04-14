@@ -136,6 +136,7 @@ class DecisionTree(SupervisedTabularDataModel):
         self.turn_off_frac = decision_tree_params.turn_off_frac
         self._check_mode()  # check if the mode is supported
         self.verbose = verbose
+        self.leaves: list[dict] = []
 
     def _check_mode(self) -> None:
         """This private method checks if the mode is supported."""
@@ -353,9 +354,16 @@ class DecisionTree(SupervisedTabularDataModel):
         """
 
         if self.mode == "classification":
-            return {"is_leaf": serie.value_counts().idxmax()}
+            leaf = {
+                "is_leaf": serie.value_counts().idxmax(),
+                "target_indexes": serie.index.tolist(),
+            }
+            self.leaves.append(leaf)
+            return leaf
         if self.mode == "regression":
-            return {"is_leaf": serie.mean()}
+            leaf = {"is_leaf": serie.mean(), "target_indexes": serie.index.tolist()}
+            self.leaves.append(leaf)
+            return leaf
         raise ValueError("The mode must be either classification or regression")
 
     def _infer_one_entry(self, sample: pd.Series, decision_tree: dict) -> str:
