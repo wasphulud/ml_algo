@@ -1,3 +1,28 @@
+"""
+Gradient Boosting Machine implementation following "Introduction to
+Statistical Learning" (ISLR) book.
+
+This module provides the GBMClassifier class, which is a supervised
+tabular data model that uses decision trees as base estimators to perform
+classification. This implementation uses a gradient boosting approach to
+boost the performance of the individual decision trees by iteratively
+fitting new trees to the negative gradients of the loss function.
+
+Attributes:
+    num_classes (int): The number of classes in the target variable.
+    epsilon (float): A small value added to the normalization denominator
+        to avoid division by zero errors.
+
+Methods:
+    __init__(self, n_estimators, decision_tree_params, learning_rate=0.1):
+        Initializes a new GBMClassifier instance.
+    _fit(self, dataframe, target):
+        Fits the model to the training data.
+    _predict(self, dataframe):
+        Predicts class labels for new data.
+
+"""
+
 from typing import List
 import pandas as pd
 import numpy as np
@@ -9,11 +34,43 @@ from trees.decision_trees import DecisionTree
 
 
 class GBMClassifier(SupervisedTabularDataModel):
-    """Gradient Boosting Machine
+    """
+    A supervised machine learning model that uses gradient boosting and decision
+    trees to perform classification.
 
-    Args:
-        SupervisedTabularDataModel (class): abstract class for supervised
-        tabular data models
+    The `GBMClassifier` class is an implementation of the gradient boosting
+    machine learning algorithm for classification tasks. This model works by
+    fitting an ensemble of decision trees to the negative gradients of a loss
+    function, and iteratively improving the predictions of the model.
+
+    Attributes:
+        num_classes (int): The number of classes in the target variable.
+        epsilon (float): A small value added to the normalization denominator
+            to avoid division by zero errors.
+        n_estimators (int): The number of decision trees to fit to the data.
+        learning_rate (float): The learning rate of the model, which controls
+            the contribution of each new tree to the final ensemble.
+        estimators (list[list[DecisionTree]]): The list of decision trees that
+            form the ensemble for each class.
+
+    Methods:
+        __init__(self, n_estimators, decision_tree_params, learning_rate=0.1):
+            Initializes a new GBMClassifier instance.
+        _fit(self, dataframe, target):
+            Fits the model to the training data.
+        _predict(self, dataframe):
+            Predicts class labels for new data.
+
+    This class inherits from the `SupervisedTabularDataModel` abstract class
+    and implements the `_fit` and `_predict` methods to provide a complete
+    supervised learning interface. The decision trees used in the model are
+    instances of the `DecisionTree` class, which can be customized through
+    the `decision_tree_params` parameter passed to the constructor.
+
+    Note that this implementation assumes that the target variable is categorical,
+    and that its values are represented as integers from 0 to `num_classes - 1`.
+    If the target variable has a different representation, it should be encoded
+    appropriately before fitting the model.
     """
 
     # TODO: add learning rate
@@ -38,11 +95,18 @@ class GBMClassifier(SupervisedTabularDataModel):
         self.decision_tree_params.mode = "regression"
 
     def _fit(self, dataframe: pd.DataFrame, target: pd.Series) -> "GBMClassifier":
-        """Fit the model
+        """Fit the GBMClassifier to the training data.
 
         Args:
-            dataframe (np.array): features
-            target (np.array): target
+            dataframe (pd.DataFrame): The feature matrix of shape (n_samples, n_features).
+            target (pd.Series): The target vector of shape (n_samples,).
+
+        Returns:
+            GBMClassifier: The fitted GBMClassifier.
+
+        Raises:
+            AssertionError: If the number of classes is not greater than 1, or if the number of
+                classes does not match the number of target_dummies_columns.
         """
         # TODO: check if target is object
         self.num_classes = len(target.unique())
@@ -99,6 +163,24 @@ class GBMClassifier(SupervisedTabularDataModel):
         return self
 
     def _predict(self, dataframe: pd.DataFrame) -> pd.Series:
+        """Predict class labels for new data.
+
+        Args:
+            dataframe (pd.DataFrame): The feature matrix of shape (n_samples, n_features).
+
+        Returns:
+            pd.Series: The predicted class labels of shape (n_samples,).
+
+        Notes:
+            The predicted class labels are determined using a weighted sum of the class probabilities
+            estimated by the decision trees in each class-specific ensemble, where the weights are the
+            learning rate and the fitted gamma values. The predicted class is the one with the highest
+            probability.
+
+        Raises:
+            ValueError: If the number of classes is not greater than 1.
+        """
+
         predictions = pd.DataFrame(
             0, index=dataframe.index, columns=list(range(self.num_classes))
         )
