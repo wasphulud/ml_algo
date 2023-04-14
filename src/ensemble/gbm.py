@@ -33,7 +33,7 @@ class GBMClassifier(SupervisedTabularDataModel):
         super().__init__()
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
-        self.estimators: list[list] = [[]]
+        self.estimators: list[list[DecisionTree]] = [[]]
         self.decision_tree_params = decision_tree_params
         self.decision_tree_params.mode = "regression"
 
