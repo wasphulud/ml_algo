@@ -19,12 +19,12 @@ from typing import Any
 
 from trees.cli import parse_args
 from trees.decision_trees import DecisionTree, DecisionTreeParams
-from ensemble.random_forest import RandomForest
 from trees.read_files import (
     read_csv,
     preprocess_bmi_dataset,
     preprocess_titanic_dataset,
 )
+from ensemble.random_forest import RandomForest
 
 
 LOGGING_LEVEL = logging.INFO

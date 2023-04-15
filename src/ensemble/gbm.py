@@ -85,7 +85,11 @@ class GBMClassifier(SupervisedTabularDataModel):
     epsilon: float = 1e-5
 
     def __init__(
-        self, n_estimators, decision_tree_params, learning_rate: float = 0.1
+        self,
+        n_estimators,
+        decision_tree_params,
+        learning_rate: float = 0.1,
+        subsample_frac: float = 1,
     ) -> None:
         super().__init__()
         self.n_estimators = n_estimators
@@ -93,6 +97,7 @@ class GBMClassifier(SupervisedTabularDataModel):
         self.estimators: list[list[DecisionTree]] = [[]]
         self.decision_tree_params = decision_tree_params
         self.decision_tree_params.mode = "regression"
+        self.subsample_frac = subsample_frac
 
     def _fit(self, dataframe: pd.DataFrame, target: pd.Series) -> "GBMClassifier":
         """Fit the GBMClassifier to the training data.
@@ -123,24 +128,38 @@ class GBMClassifier(SupervisedTabularDataModel):
             0, index=dataframe.index, columns=list(target_dummies_columns)
         )
 
-        for _ in range(1, self.n_estimators + 1):
+        for m in range(1, self.n_estimators + 1):
+            if m % 50 == 0:
+                print(f"Initiating estimator {m} out of {self.n_estimators} ... ")
             normalization = pd.concat(
                 [np.sum(np.exp(estimator), axis=1)] * self.num_classes, axis=1
             )
             normalization.columns = target_dummies_columns
+
             probabilities = np.exp(estimator) / (normalization + self.epsilon)
 
             negative_gradient = target_dummies - probabilities
+
+            indices = np.random.choice(
+                dataframe.index,
+                size=int(dataframe.shape[0] * self.subsample_frac),
+                replace=False,
+            )
+
+            training_dataframe = dataframe.loc[indices]
+            training_negative_gradient = negative_gradient.loc[indices]
             for k in range(self.num_classes):
-                kth_negative_gradient = negative_gradient[target_dummies_columns[k]]
+                kth_negative_gradient = training_negative_gradient[
+                    target_dummies_columns[k]
+                ]
                 current_estimator = DecisionTree(
                     decision_tree_params=self.decision_tree_params
                 )
-                current_estimator.fit(dataframe, kth_negative_gradient)
+                current_estimator.fit(training_dataframe, kth_negative_gradient)
                 gamma_m_k = {}
                 for j, leaf in enumerate(current_estimator.leaves):
                     region_indexes = leaf["target_indexes"]
-                    kth_j_negative_gradient = kth_negative_gradient.iloc[region_indexes]
+                    kth_j_negative_gradient = kth_negative_gradient.loc[region_indexes]
                     gamma_m_k_j = (
                         (self.num_classes - 1)
                         / self.num_classes
