@@ -93,7 +93,9 @@ class AdaBoost(SupervisedTabularDataModel):
         n_samples = dataframe.shape[0]
         weights = self._init_weights(n_samples)  # 1- init the weights
 
-        for _ in range(self.n_estimators):  # 2 - for each base estimator
+        for m in range(self.n_estimators):  # 2 - for each base estimator
+            if m % 10 == 0:
+                print(f"Initiating estimator {m} out of {self.n_estimators} ... ")
             estimator = copy.deepcopy(self.model)
             indices = np.random.choice(
                 dataframe.index, size=n_samples, replace=True, p=weights
