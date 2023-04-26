@@ -1,4 +1,5 @@
 """ This module implements the adaboost algorithm
+AdaBoost (short for Adaptive Boosting) is a machine learning algorithm that combines multiple "weak" classifiers into a "strong" classifier. It was proposed by Yoav Freund and Robert Schapire in 1995. In each iteration of the algorithm, it trains a weak classifier on the data, and then adjusts the weights of the misclassified samples to give them more weight. The algorithm then trains the next weak classifier on the modified data, and continues the process for a pre-determined number of iterations or until the classifier reaches a desired level of accuracy. The final classifier is a weighted combination of the weak classifiers, where each weak classifier's weight is proportional to its accuracy. AdaBoost is commonly used in classification problems and has been shown to be effective in a wide range of applications.
 """
 
 from typing import List, Optional
