@@ -129,8 +129,6 @@ class GBMClassifier(SupervisedTabularDataModel):
         )
 
         for m in range(1, self.n_estimators + 1):
-            if m % 100 == 0:
-                print(f"Initiating estimator {m} out of {self.n_estimators} ... ")
             normalization = pd.concat(
                 [np.sum(np.exp(estimator), axis=1)] * self.num_classes, axis=1
             )
