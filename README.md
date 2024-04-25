@@ -4,7 +4,7 @@ Welcome to AI Artisan! This is a repository where you can hone your skills as an
 
 ## Why Reinvent the Wheel?
 
-" I do not understand what I cannot create" R.F.
+" I do not understand what I cannot create" R.F.  
 You might be wondering why you should bother building machine learning algorithms from scratch when there are so many libraries and pre-built models available. The truth is, there's no better way to really understand how machine learning works than to build it yourself. By reinventing the wheel, so to speak, you gain a deeper understanding of the underlying principles and can better troubleshoot problems when they arise. Plus, it's just plain fun!
 
 ## What's Included
